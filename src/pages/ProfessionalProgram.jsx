@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import API from '../api'; // Your API utility
+import API from '../api';
 
 const ProfessionalPage = () => {
-  const [programs, setPrograms] = useState([]); // Assigned programs
-  const [selectedProgram, setSelectedProgram] = useState(null); // Program selected for updates
-  const [progress, setProgress] = useState({}); // Progress update per chapter
-  const [remarks, setRemarks] = useState({}); // Remarks update per chapter
-  const [participants, setParticipants] = useState([]); // Participants for selected program
-  const [availableParticipants, setAvailableParticipants] = useState([]); // All users with 'participant' role
-  const [newParticipantId, setNewParticipantId] = useState(''); // New participant to add
-  const [chapters, setChapters] = useState([]); // Chapters for selected program
+  const [programs, setPrograms] = useState([]);
+  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [progress, setProgress] = useState({});
+  const [remarks, setRemarks] = useState({});
+  const [participants, setParticipants] = useState([]);
+  const [availableParticipants, setAvailableParticipants] = useState([]);
+  const [newParticipantId, setNewParticipantId] = useState('');
+  const [chapters, setChapters] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch programs assigned to the professional on component mount
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
@@ -26,19 +27,20 @@ const ProfessionalPage = () => {
         setPrograms(data);
       } catch (error) {
         console.error('Error fetching assigned programs:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchPrograms();
   }, []);
 
-  // Handle selecting a program
   const handleSelectProgram = async (program) => {
     setSelectedProgram(program);
     setProgress({});
     setRemarks({});
+    setIsLoading(true);
     
-    // Convert the participants CSV string into an array
     setParticipants(program.participants ? program.participants.split(',') : []);
 
     try {
@@ -55,29 +57,27 @@ const ProfessionalPage = () => {
       setProgress(initialProgress);
       setRemarks(initialRemarks);
 
-      // Fetch available participants (users with role 'participant')
       const participantsResponse = await fetch(`${API.baseUrl}/programs/participants`);
       const availableParticipantsData = await participantsResponse.json();
-      // Filter out users already in the program
       const filteredParticipants = availableParticipantsData.filter(participant => 
         !program.participants?.split(',').includes(participant.id.toString())
       );
       setAvailableParticipants(filteredParticipants);
-
     } catch (error) {
       console.error('Error fetching chapters:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Handle adding a participant to the selected program
   const handleAddParticipant = async (e) => {
     e.preventDefault();
-
     if (!newParticipantId) {
       alert('Please select a participant to add');
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const response = await fetch(`${API.baseUrl}/programs/addparticipant`, {
         method: 'POST',
@@ -91,7 +91,6 @@ const ProfessionalPage = () => {
       });
 
       if (response.ok) {
-        alert('Participant added successfully');
         const updatedProgram = await fetch(`${API.baseUrl}/programs/${selectedProgram.id}`);
         const updatedData = await updatedProgram.json();
         setParticipants(updatedData.participants ? updatedData.participants.split(',') : []);
@@ -102,10 +101,11 @@ const ProfessionalPage = () => {
       }
     } catch (error) {
       console.error('Error adding participant:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Handle removing a participant from the selected program
   const handleRemoveParticipant = async (userId) => {
     try {
       const response = await fetch(`${API.baseUrl}/programs/removeparticipant`, {
@@ -120,7 +120,6 @@ const ProfessionalPage = () => {
       });
 
       if (response.ok) {
-        alert('Participant removed successfully');
         setParticipants(participants.filter((participant) => participant !== userId));
       } else {
         const data = await response.json();
@@ -131,79 +130,148 @@ const ProfessionalPage = () => {
     }
   };
 
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Assigned Programs</h2>
-      {/* List of Assigned Programs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {programs.map((program) => (
-          <div
-            key={program.id}
-            className={`p-4 border rounded shadow-md ${selectedProgram?.id === program.id ? 'border-blue-500' : 'border-gray-300'}`}
-            onClick={() => handleSelectProgram(program)}
-          >
-            <h3 className="text-lg font-bold">{program.name}</h3>
-            <p className="text-gray-600">{program.description}</p>
-            <p className="text-sm text-gray-500">
-              Created By: {program.created_by_name} | Status: {program.status}
-            </p>
-            <p className="text-sm text-gray-500">Assigned To: {program.assigned_to_name || 'Not Assigned'}</p>
-          </div>
-        ))}
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
+    );
+  }
 
-      {/* Add Participant Form */}
-      {selectedProgram && (
-        <div className="mt-8">
-          <h3 className="text-xl font-bold">Add Participant to Program: {selectedProgram.name}</h3>
-          <form onSubmit={handleAddParticipant} className="mt-4 space-y-4">
-            <select
-              value={newParticipantId}
-              onChange={(e) => setNewParticipantId(e.target.value)}
-              className="w-full p-2 border rounded"
-              required
-            >
-              <option value="">Select Participant</option>
-              {/* Render all participants, excluding those already added */}
-              {availableParticipants.map((participant) => (
-                <option key={participant.id} value={participant.id}>
-                  {participant.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              Add Participant
-            </button>
-          </form>
-        </div>
-      )}
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">
+            Programs Management
+          </h2>
 
-      {/* Participants List */}
-      {selectedProgram && (
-        <div className="mt-8">
-          <h3 className="text-xl font-bold">Participants in Program</h3>
-          <ul className="space-y-2">
-            {participants.length > 0 ? (
-              participants.map((participant) => (
-                <li key={participant} className="text-sm text-gray-600">
-                  {participant}
-                  <button
-                    onClick={() => handleRemoveParticipant(participant)}
-                    className="ml-4 text-red-500 hover:text-red-700"
+          {/* Programs Grid */}
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                Assigned Programs
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {programs.map((program) => (
+                  <div
+                    key={program.id}
+                    onClick={() => handleSelectProgram(program)}
+                    className={`
+                      relative overflow-hidden rounded-lg p-6 cursor-pointer
+                      transition-all duration-200 ease-in-out
+                      ${
+                        selectedProgram?.id === program.id
+                          ? 'bg-blue-50 border-2 border-blue-500 shadow-md transform scale-102'
+                          : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-md'
+                      }
+                    `}
                   >
-                    Remove
-                  </button>
-                </li>
-              ))
-            ) : (
-              <li>No participants yet</li>
+                    <div className="flex flex-col h-full">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                        {program.name}
+                      </h4>
+                      <p className="text-gray-600 mb-4 flex-grow">
+                        {program.description}
+                      </p>
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-500">
+                          Created by: <span className="font-medium">{program.created_by_name}</span>
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Status: <span className="font-medium">{program.status}</span>
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Assigned to: <span className="font-medium">{program.assigned_to_name || 'Not Assigned'}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Selected Program Section */}
+            {selectedProgram && (
+              <div className="mt-12 space-y-8">
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-6">
+                    Add Participant to {selectedProgram.name}
+                  </h3>
+                  <form onSubmit={handleAddParticipant} className="space-y-4">
+                    <div>
+                      <select
+                        value={newParticipantId}
+                        onChange={(e) => setNewParticipantId(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                        required
+                      >
+                        <option value="">Select Participant</option>
+                        {availableParticipants.map((participant) => (
+                          <option key={participant.id} value={participant.id}>
+                            {participant.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`
+                        w-full sm:w-auto px-6 py-3 rounded-lg text-white font-medium
+                        transition-all duration-200 ease-in-out
+                        ${
+                          isSubmitting
+                            ? 'bg-blue-400 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                        }
+                      `}
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                          Adding...
+                        </span>
+                      ) : (
+                        'Add Participant'
+                      )}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Participants List */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-6">
+                    Current Participants
+                  </h3>
+                  <div className="space-y-4">
+                    {participants.length > 0 ? (
+                      participants.map((participant) => (
+                        <div
+                          key={participant}
+                          className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          <span className="text-gray-700">{participant}</span>
+                          <button
+                            onClick={() => handleRemoveParticipant(participant)}
+                            className="px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors duration-200"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">
+                        No participants added yet
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
-          </ul>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -77,6 +77,11 @@ const Sidebar = () => {
         label="Manage Chapters" 
         onClick={() => navigate('/chapters')} 
       />
+       <SidebarItem 
+        icon={BarChart} 
+        label="Chats" 
+        onClick={() => navigate('/chats')} 
+      />
     </>
   );
 
@@ -91,6 +96,21 @@ const Sidebar = () => {
         icon={BarChart} 
         label="Your Programs" 
         onClick={() => navigate('/professional/programs')} 
+      />
+      <SidebarItem 
+        icon={Briefcase} 
+        label="Manage Chapters" 
+        onClick={() => navigate('/chapters')} 
+      />
+       <SidebarItem 
+        icon={BarChart} 
+        label="Participants Progress" 
+        onClick={() => navigate('/professional/progress')} 
+      />
+       <SidebarItem 
+        icon={BarChart} 
+        label="Chats" 
+        onClick={() => navigate('/chats')} 
       />
     </>
   );
