@@ -78,9 +78,9 @@ const Sidebar = () => {
         onClick={() => navigate('/chapters')} 
       />
        <SidebarItem 
-        icon={BarChart} 
-        label="Chats" 
-        onClick={() => navigate('/chats')} 
+        icon={Briefcase} 
+        label="Rehab Participants" 
+        onClick={() => navigate('/rehab')} 
       />
     </>
   );
@@ -109,8 +109,8 @@ const Sidebar = () => {
       />
        <SidebarItem 
         icon={BarChart} 
-        label="Chats" 
-        onClick={() => navigate('/chats')} 
+        label="Your Profile" 
+        onClick={() => navigate('/profile')} 
       />
     </>
   );

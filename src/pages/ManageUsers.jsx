@@ -1,194 +1,497 @@
 import React, { useEffect, useState } from 'react';
-import API from '../api'; // Import API utility
+import API from '../api';
+import { Snackbar } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
+import { 
+  Plus, X, Edit2, Trash2, UserCheck, UserX, Eye,
+  Mail, Phone, MapPin, Briefcase, IdCard, Calendar, User,
+  Key
+} from 'lucide-react';
 
 const ManageUsers = () => {
-  const [users, setUsers] = useState([]); // Ensure it's initialized as an array
-  const [form, setForm] = useState({ id: null, name: '', email: '', username: '', role: 'participant', password: '' });
+  const [users, setUsers] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [form, setForm] = useState({
+    id: null,
+    name: '',
+    gender: '',
+    profession: '',
+    national_id: '',
+    address: '',
+    rehab_reason: '',
+    email: '',
+    username: '',
+    role: 'participant',
+    password: '',
+    verified: false,
+  });
   const [isEditing, setIsEditing] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Fetch users from the backend
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch(`${API.baseUrl}/users`);
-        const data = await response.json();
-
-        // Update the users state with the correct array
-        setUsers(data.users || []); // Ensure data.users exists, otherwise fallback to an empty array
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
     fetchUsers();
   }, []);
 
-  // Handle form input changes
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${API.baseUrl}/users`);
+      if (!response.ok) throw new Error('Failed to fetch users');
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      showSnackbar('Error fetching users', 'error');
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'national_id' && value.length > 16) return;
     setForm({ ...form, [name]: value });
   };
 
-  // Handle form submission (Create or Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      if (isEditing) {
-        // Update user
-        await fetch(`${API.baseUrl}/users/${form.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(form),
-        });
-      } else {
-        // Create user
-        await fetch(`${API.baseUrl}/users/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(form),
-        });
-      }
-      setForm({ id: null, name: '', email: '', username: '', role: 'participant', password: '' });
-      setIsEditing(false);
-      const response = await fetch(`${API.baseUrl}/users`);
-      const data = await response.json();
-      setUsers(data.users || []); // Refresh user list
+      const url = isEditing ? `${API.baseUrl}/users/${form.id}` : `${API.baseUrl}/users/register`;
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      if (!response.ok) throw new Error('Error saving user');
+
+      showSnackbar(isEditing ? 'User updated successfully' : 'User created successfully', 'success');
+      resetForm();
+      fetchUsers();
+      setShowModal(false);
     } catch (error) {
       console.error('Error submitting user:', error);
+      showSnackbar('Error submitting user', 'error');
     }
   };
 
-  // Handle deleting a user
   const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    
     try {
-      await fetch(`${API.baseUrl}/users/${id}`, { method: 'DELETE' });
+      const response = await fetch(`${API.baseUrl}/users/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Error deleting user');
+
       setUsers(users.filter((user) => user.id !== id));
+      showSnackbar('User deleted successfully', 'success');
     } catch (error) {
       console.error('Error deleting user:', error);
+      showSnackbar('Error deleting user', 'error');
     }
   };
 
-  // Handle editing a user
   const handleEdit = (user) => {
     setForm(user);
     setIsEditing(true);
+    setShowModal(true);
+  };
+
+  const handleVerify = async (id, status) => {
+    try {
+      const response = await fetch(`${API.baseUrl}/users/verify/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verified: status }),
+      });
+
+      if (!response.ok) throw new Error('Error verifying user');
+
+      fetchUsers();
+      showSnackbar(status ? 'User verified successfully' : 'User verification revoked', 'success');
+    } catch (error) {
+      console.error('Error verifying user:', error);
+      showSnackbar('Error verifying user', 'error');
+    }
+  };
+
+  const resetForm = () => {
+    setForm({
+      id: null,
+      name: '',
+      gender: '',
+      profession: '',
+      national_id: '',
+      address: '',
+      rehab_reason: '',
+      email: '',
+      username: '',
+      role: 'participant',
+      password: '',
+      verified: false,
+    });
+    setIsEditing(false);
+  };
+
+  const showSnackbar = (message, severity) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleViewDetails = (user) => {
+    setSelectedUser(user);
+    setShowDetailsModal(true);
+  };
+
+  const inputClass = "w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+  const buttonClass = "inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
+
+  // Form Modal Component
+  const FormModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b">
+          <h3 className="text-2xl font-semibold text-gray-900">
+            {isEditing ? 'Edit User' : 'Add New User'}
+          </h3>
+          <button
+            onClick={() => setShowModal(false)}
+            className="text-gray-400 hover:text-gray-500 transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Names</label>
+              <input type="text" name="name" value={form.name} onChange={handleChange} className={inputClass} required />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">National ID</label>
+              <input 
+                type="text" 
+                name="national_id" 
+                value={form.national_id} 
+                onChange={handleChange} 
+                maxLength={16}
+                className={inputClass} 
+              />
+              <div className="mt-1 text-sm text-gray-500">{form.national_id.length}/16 characters</div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <select name="gender" value={form.gender} onChange={handleChange} className={inputClass}>
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+              <input type="text" name="profession" value={form.profession} onChange={handleChange} className={inputClass} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <input type="text" name="address" value={form.address} onChange={handleChange} className={inputClass} />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rehab Reason</label>
+              <textarea 
+                name="rehab_reason" 
+                value={form.rehab_reason} 
+                onChange={handleChange} 
+                className={`${inputClass} h-24 resize-none`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange} className={inputClass} required />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input type="text" name="username" value={form.username} onChange={handleChange} className={inputClass} required />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <select name="role" value={form.role} onChange={handleChange} className={inputClass} required>
+                <option value="participant">Guardian</option>
+                <option value="professional">Professional</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            {!isEditing && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input 
+                  type="password" 
+                  name="password" 
+                  value={form.password} 
+                  onChange={handleChange} 
+                  className={inputClass} 
+                  required={!isEditing}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Cancel
+            </button>
+            <button type="submit" className={buttonClass}>
+              {isEditing ? 'Update User' : 'Add User'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  // Details Modal Component
+  const UserDetailsModal = ({ user, onClose }) => {
+    if (!user) return null;
+
+    const DetailRow = ({ icon: Icon, label, value }) => (
+      <div className="flex items-start space-x-3 p-4 hover:bg-gray-50 rounded-lg transition-colors">
+        <div className="flex-shrink-0">
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <Icon className="h-5 w-5 text-blue-600" />
+          </div>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-500">{label}</p>
+          <p className="mt-1 text-sm text-gray-900">{value || 'Not provided'}</p>
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="border-b border-gray-200">
+            <div className="p-6 flex justify-between items-start">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">User Details</h3>
+                <p className="mt-1 text-sm text-gray-500">Comprehensive information about the user</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-500 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Header Information */}
+            <div className="flex items-center justify-between pb-6 border-b">
+              <div className="flex items-center space-x-4">
+                <div className="h-16 w-16 rounded-full bg-blue-600 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">
+                    {user.name?.charAt(0)?.toUpperCase() || '?'}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-900">{user.name}</h4>
+                  <p className="text-sm text-gray-500">{user.role}</p>
+                </div>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium
+                ${user.verified 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'}`}
+              >
+                {user.verified ? 'Verified' : 'Unverified'}
+              </span>
+            </div>
+
+            {/* Details Grid */}
+            <div className="mt-6 space-y-1">
+              <DetailRow icon={User} label="Username" value={user.username} />
+              <DetailRow icon={Mail} label="Email" value={user.email} />
+              <DetailRow icon={IdCard} label="National ID" value={user.national_id} />
+              <DetailRow icon={User} label="Gender" value={user.gender} />
+              <DetailRow icon={Briefcase} label="Profession" value={user.profession} />
+              <DetailRow icon={MapPin} label="Address" value={user.address} />
+              
+              {/* Rehab Reason Section */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h5 className="text-sm font-medium text-gray-900 mb-2">Rehabilitation Reason</h5>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                  {user.rehab_reason || 'No reason provided'}
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 
+                         rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 
+                         focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Manage Users</h2>
-
-      {/* User Form */}
-      <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 shadow-md rounded-lg">
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Name"
-            value={form.name}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            required
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            required
-          />
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={form.username}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            required
-          />
-          <select
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            required
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Manage Users</h2>
+            <p className="mt-1 text-sm text-gray-500">View and manage user accounts</p>
+          </div>
+          <button
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg
+                     text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 
+                     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                     shadow-sm transition-colors duration-200 gap-2"
           >
-            <option value="participant">Participant</option>
-            <option value="professional">Professional</option>
-            <option value="admin">Admin</option>
-          </select>
-          {!isEditing && (
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              className="p-2 border rounded"
-              required
-            />
-          )}
+            <Plus className="h-5 w-5" />
+            Add New User
+          </button>
         </div>
-        <button
-          type="submit"
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          {isEditing ? 'Update User' : 'Add User'}
-        </button>
-      </form>
 
-      {/* User List */}
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr>
-            <th classnmame="border-bottom-white p-2">ID</th>
-            <th className="border border-gray-300 p-2">Name</th>
-            <th className="border border-gray-300 p-2">Email</th>
-            <th className="border border-gray-300 p-2">Username</th>
-            <th className="border border-gray-300 p-2">Role</th>
-            <th className="border border-gray-300 p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.length > 0 ? (
-            users.map((user) => (
-              <tr key={user.id} className="text-center">
-                <td className="border border-gray-300 p-2">{user.id}</td>
-                <td className="border border-gray-300 p-2">{user.name}</td>
-                <td className="border border-gray-300 p-2">{user.email}</td>
-                <td className="border border-gray-300 p-2">{user.username}</td>
-                <td className="border border-gray-300 p-2">{user.role}</td>
-                <td className="border border-gray-300 p-2">
-                  <button
-                    onClick={() => handleEdit(user)}
-                    className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5" className="text-center p-4">
-                No users found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+        {/* User List */}
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
+                          <span className="text-sm font-medium text-white">
+                            {user.name?.charAt(0)?.toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                          <div className="text-sm text-gray-500">{user.username}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">{user.email}</div>
+                      <div className="text-sm text-gray-500">{user.profession}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                        ${user.verified 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'}`}
+                      >
+                        {user.verified ? 'Verified' : 'Unverified'}
+                      </span>
+                      <div className="text-sm text-gray-500 mt-1">{user.role}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleViewDetails(user)}
+                          className="inline-flex items-center px-3 py-1 rounded-md text-sm
+                                   text-blue-600 hover:bg-blue-50 transition-colors duration-200"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Details
+                        </button>
+                        <button
+                          onClick={() => handleVerify(user.id, !user.verified)}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-sm
+                                   text-green-600 hover:bg-green-50 transition-colors duration-200"
+                        >
+                          {user.verified ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-sm
+                                   text-amber-600 hover:bg-amber-50 transition-colors duration-200"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-sm
+                                   text-red-600 hover:bg-red-50 transition-colors duration-200"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Add/Edit Modal */}
+        {showModal && <FormModal />}
+
+        {/* Details Modal */}
+        {showDetailsModal && (
+          <UserDetailsModal 
+            user={selectedUser} 
+            onClose={() => {
+              setShowDetailsModal(false);
+              setSelectedUser(null);
+            }} 
+          />
+        )}
+
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          <MuiAlert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            elevation={6}
+            variant="filled"
+          >
+            {snackbar.message}
+          </MuiAlert>
+        </Snackbar>
+      </div>
     </div>
   );
 };

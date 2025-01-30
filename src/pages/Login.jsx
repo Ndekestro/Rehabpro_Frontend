@@ -22,14 +22,40 @@ const Login = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'  // Explicitly request JSON response
         },
         body: JSON.stringify(loginData),
       });
 
-      const data = await response.json();
+      // Log response details for debugging
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      // Get the raw response text first
+      const rawResponse = await response.text();
+      console.log('Raw response:', rawResponse);
+
+      let data;
+      try {
+        // Try to parse the raw response as JSON
+        data = rawResponse ? JSON.parse(rawResponse) : null;
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError);
+        console.log('Response that failed to parse:', rawResponse);
+        throw new Error(
+          `Invalid JSON response from server. Status: ${response.status}. ` +
+          `Content-Type: ${response.headers.get('content-type')}. ` +
+          'Please check the console for full response details.'
+        );
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data?.message || `Server error: ${response.status}`);
+      }
+
+      if (!data || !data.token || !data.user) {
+        console.error('Invalid response structure:', data);
+        throw new Error('Invalid response data: missing token or user information');
       }
 
       const { token, user } = data;
@@ -42,7 +68,8 @@ const Login = () => {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.message || 'An error occurred');
+      console.error('Login error:', err);
+      setError(err.message || 'An error occurred during login. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -112,10 +139,16 @@ const Login = () => {
 
             <div className="text-center">
               <a 
+                href="/signup" 
+                className="text-sm text-blue-600 hover:text-blue-800 transition duration-300"
+              >
+                Sign Up
+              </a>
+              <a 
                 href="/forgot-password" 
                 className="text-sm text-blue-600 hover:text-blue-800 transition duration-300"
               >
-                Forgot Password?
+                Forgot Password
               </a>
             </div>
           </form>
