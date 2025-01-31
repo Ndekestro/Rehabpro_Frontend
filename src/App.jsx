@@ -16,6 +16,10 @@ import ParticipantChatPage from './pages/Chats';
 import AdminProfessionalChatPage from './pages/ProfessionalProfile';
 import ForgotPassword from './pages/ForgotPassword';
 import RehabParticipants from './pages/RehabParticipants';
+import AssignedParticipants from './pages/Assigned';
+import GuardianHelpRequests from './pages/RequestHelp';
+import ProfessionalHelpRequests from './pages/ProfessionalReuquestHelp';
+import AdminHelpDashboard from './pages/AdminHelp';
 
 const App = () => {
   return (
@@ -47,6 +51,9 @@ const AppContent = () => {
 
               <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
               <Route path="/rehab" element={isLoggedIn ? <RehabParticipants/> : <Navigate to="/rehab" />} />
+              <Route path="/professional/help" element={isLoggedIn ? <ProfessionalHelpRequests /> : <Navigate to="/login" />} />
+              <Route path="/admin/help" element={isLoggedIn ? <AdminHelpDashboard /> : <Navigate to="/login" />} />
+              <Route path="/assignedprofessionals" element={isLoggedIn ? <AssignedParticipants /> : <Navigate to="/assignedprofessionals" />} />
               <Route path="/users" element={isLoggedIn ? <ManageUsers /> : <Navigate to="/login" />} />
               <Route path="/programs" element={isLoggedIn ? <ManagePrograms /> : <Navigate to="/login" />} />
               <Route path="/chapters" element={isLoggedIn ? <ManageChapters /> : <Navigate to="/login" />} />
@@ -64,6 +71,7 @@ const AppContent = () => {
           <Routes>
             <Route path="/participant/programs" element={<ParticipantPage />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/help" element={<GuardianHelpRequests />} />
 
             <Route path="/chats" element={<ParticipantChatPage />} />
           </Routes>

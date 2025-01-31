@@ -70,7 +70,7 @@ const Navbar = () => {
               className={navLinkClass('/help')}
             >
               <HelpCircle className="h-5 w-5" />
-              <span>Help</span>
+              <span>Request Help</span>
               {isActivePath('/help') && (
                 <span className="absolute bottom-0 left-0 h-0.5 w-full bg-white transform origin-left" />
               )}

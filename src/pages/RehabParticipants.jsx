@@ -80,14 +80,24 @@ const RehabManagement = () => {
     e.preventDefault();
     try {
       const url = isEditing 
-        ? `${API.baseUrl}/rehab/participants/${form.id}` // Notice the plural 'participants'
+        ? `${API.baseUrl}/rehab/participants/${form.id}`
         : `${API.baseUrl}/rehab/participants`;
       const method = isEditing ? 'PUT' : 'POST';
   
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.name,
+          gender: form.gender,
+          age: form.age,
+          condition: form.condition,
+          guardian_id: form.guardian_id,
+          professional_id: form.professional_id,
+          admission_date: form.admission_date,
+          status: form.status,
+          notes: form.notes || '',  // ✅ Ensures notes is always sent
+        }),
       });
   
       if (!response.ok) throw new Error('Error saving participant');
@@ -100,7 +110,7 @@ const RehabManagement = () => {
       setError('Error submitting participant');
     }
   };
-
+  
   // ✅ Delete a Rehabilitation Participant
   const handleDelete = async (id) => {
     try {
@@ -117,8 +127,10 @@ const RehabManagement = () => {
     // Format the date to YYYY-MM-DD for the input field
     const formattedParticipant = {
       ...participant,
-      admission_date: participant.admission_date.split('T')[0] // Format date for input
+      id: participant.id, // Ensure ID is included ✅
+      admission_date: participant.admission_date.split('T')[0], // Format date for input
     };
+  
     setForm(formattedParticipant);
     setIsEditing(true);
     setShowFormModal(true);
@@ -291,17 +303,40 @@ const RehabManagement = () => {
               </select>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea
-                name="notes"
-                value={form.notes}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 h-32 resize-none"
-                placeholder="Additional notes..."
-              />
-            </div>
-          </div>
+          <div className="space-y-2">
+  <label className="block text-lg font-semibold text-gray-700">Notes</label>
+  
+  <div className="flex flex-col gap-2">
+  <div className="group">
+  <div className="relative">
+    <textarea 
+     
+      onChange={handleChange}
+      rows={6}
+      placeholder="Document observations, treatment notes, or any additional information here..."
+      className="peer w-full rounded-lg border border-gray-300 bg-white px-4 py-3 
+                text-sm outline-none transition-all duration-150
+                placeholder:text-gray-400
+                hover:border-gray-400
+                focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                group-focus-within:border-blue-500"
+    />
+    <label className="absolute -top-2 left-3 bg-white px-1 text-xs font-medium 
+                    text-gray-600 transition-all duration-150
+                    peer-placeholder-shown:top-3 peer-placeholder-shown:left-4 
+                    peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500
+                    peer-focus:-top-2 peer-focus:left-3 peer-focus:text-xs
+                    peer-focus:text-blue-500">
+      Notes
+    </label>
+  </div>
+  <div className="mt-1 text-right text-xs text-gray-500">
+    0 / 1000 characters
+  </div>
+</div>
+</div>
+</div>
+</div>
 
           <div className="mt-6 flex justify-end gap-3">
             <button
@@ -324,7 +359,11 @@ const RehabManagement = () => {
   );
 
   const DetailsModal = ({ participant, onClose }) => {
-    if (!participant) return null;
+    console.log('Notes value:', {
+      raw: participant.notes,
+      type: typeof participant.notes,
+      length: participant.notes?.length
+    });
 
     const DetailRow = ({ icon: Icon, label, value }) => (
       <div className="flex items-start space-x-3 p-4 hover:bg-gray-50 rounded-lg">
@@ -387,11 +426,12 @@ const RehabManagement = () => {
               <DetailRow icon={Clock} label="Admission Date" value={participant.admission_date} />
               
               {/* Notes Section */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h5 className="text-sm font-medium text-gray-900 mb-2">Additional Notes</h5>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                  {participant.notes || 'No additional notes'}
-                </p>
+             {/* Notes Section */}
+<div className="mt-6 p-4 bg-gray-50 rounded-lg">
+  <h5 className="text-sm font-medium text-gray-900 mb-2">Additional Notes</h5>
+  <p className="text-sm text-gray-600 whitespace-pre-wrap">
+    {participant?.notes?.trim() ? participant.notes : 'No additional notes'}
+  </p>
               </div>
             </div>
           </div>
