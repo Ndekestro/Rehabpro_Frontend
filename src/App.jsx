@@ -20,6 +20,7 @@ import AssignedParticipants from './pages/Assigned';
 import GuardianHelpRequests from './pages/RequestHelp';
 import ProfessionalHelpRequests from './pages/ProfessionalReuquestHelp';
 import AdminHelpDashboard from './pages/AdminHelp';
+import AdminReports from './pages/Report';
 
 const App = () => {
   return (
@@ -53,6 +54,7 @@ const AppContent = () => {
               <Route path="/rehab" element={isLoggedIn ? <RehabParticipants/> : <Navigate to="/rehab" />} />
               <Route path="/professional/help" element={isLoggedIn ? <ProfessionalHelpRequests /> : <Navigate to="/login" />} />
               <Route path="/admin/help" element={isLoggedIn ? <AdminHelpDashboard /> : <Navigate to="/login" />} />
+              <Route path="/reports" element={isLoggedIn ? <AdminReports /> : <Navigate to="/login" />} />
               <Route path="/assignedprofessionals" element={isLoggedIn ? <AssignedParticipants /> : <Navigate to="/assignedprofessionals" />} />
               <Route path="/users" element={isLoggedIn ? <ManageUsers /> : <Navigate to="/login" />} />
               <Route path="/programs" element={isLoggedIn ? <ManagePrograms /> : <Navigate to="/login" />} />

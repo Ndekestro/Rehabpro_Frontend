@@ -5,7 +5,7 @@ import {
   BarChart, LogOut, ChevronLeft, ChevronRight,
   Home, BookOpen, Award, Settings, HelpCircle,
   UserCircle, Activity, Heart, Brain, FileText,
-  Shield, Gauge
+  Shield, Gauge,MessageSquareWarning
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -129,6 +129,11 @@ const Sidebar = () => {
           icon={Brain} 
           label="Rehab Participants" 
           path="/rehab"
+        />
+        <SidebarItem 
+          icon={MessageSquareWarning} 
+          label="Reports" 
+          path="/reports"
         />
       </SidebarSection>
 
