@@ -172,9 +172,14 @@ const Sidebar = () => {
           icon={Users} 
           label="Assigned Participants" 
           path="/assignedprofessionals"
-          badge="5"
+        />
+         <SidebarItem 
+          icon={Users} 
+          label="Talk To Guardians" 
+          path="/sendemail"
         />
       </SidebarSection>
+
 
       <SidebarSection title="Resources">
         <SidebarItem 

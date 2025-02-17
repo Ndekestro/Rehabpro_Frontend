@@ -173,190 +173,276 @@ const RehabManagement = () => {
     }
   };
 
-  const FormModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h3 className="text-2xl font-semibold text-gray-900">
-            {isEditing ? 'Edit Participant' : 'Add New Participant'}
-          </h3>
-          <button
-            onClick={() => setShowFormModal(false)}
-            className="text-gray-400 hover:text-gray-500 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-              <select
-                name="gender"
-                value={form.gender}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-              <input
-                type="number"
-                name="age"
-                value={form.age}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
-              <select
-                name="condition"
-                value={form.condition}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Condition</option>
-                <option value="Drug Addiction">Drug Addiction</option>
-                <option value="Alcoholism">Alcoholism</option>
-                <option value="Mental Health Issue">Mental Health Issue</option>
-                <option value="Trauma Recovery">Trauma Recovery</option>
-                <option value="Physical Rehabilitation">Physical Rehabilitation</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Guardian</label>
-              <select
-                name="guardian_id"
-                value={form.guardian_id}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Guardian</option>
-                {guardians.map((g) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Professional</label>
-              <select
-                name="professional_id"
-                value={form.professional_id}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Professional</option>
-                {professionals.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name} - {p.profession}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Admission Date</label>
-              <input
-                type="date"
-                name="admission_date"
-                value={form.admission_date}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Active">Active</option>
-                <option value="Discharged">Discharged</option>
-                <option value="Transferred">Transferred</option>
-              </select>
-            </div>
-
-          <div className="space-y-2">
-  <label className="block text-lg font-semibold text-gray-700">Notes</label>
+  const FormModal = () => {
+    // Local state for form input
+    const [localForm, setLocalForm] = useState({
+      name: form.name || '',
+      gender: form.gender || '',
+      age: form.age || '',
+      condition: form.condition || '',
+      guardian_id: form.guardian_id || '',
+      professional_id: form.professional_id || '',
+      admission_date: form.admission_date || '',
+      status: form.status || 'Active',
+      notes: form.notes || ''
+    });
   
-  <div className="flex flex-col gap-2">
-  <div className="group">
-  <div className="relative">
-    <textarea 
-     
-      onChange={handleChange}
-      rows={6}
-      placeholder="Document observations, treatment notes, or any additional information here..."
-      className="peer w-full rounded-lg border border-gray-300 bg-white px-4 py-3 
-                text-sm outline-none transition-all duration-150
-                placeholder:text-gray-400
-                hover:border-gray-400
-                focus:border-blue-500 focus:ring-1 focus:ring-blue-500
-                group-focus-within:border-blue-500"
-    />
-    <label className="absolute -top-2 left-3 bg-white px-1 text-xs font-medium 
-                    text-gray-600 transition-all duration-150
-                    peer-placeholder-shown:top-3 peer-placeholder-shown:left-4 
-                    peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500
-                    peer-focus:-top-2 peer-focus:left-3 peer-focus:text-xs
-                    peer-focus:text-blue-500">
-      Notes
-    </label>
-  </div>
-  <div className="mt-1 text-right text-xs text-gray-500">
-    0 / 1000 characters
-  </div>
-</div>
-</div>
-</div>
-</div>
-
-          <div className="mt-6 flex justify-end gap-3">
+    // State for validation errors
+    const [errors, setErrors] = useState({});
+  
+    const validateField = (name, value) => {
+      switch (name) {
+        case 'name':
+          if (!value) return 'Name is required';
+          if (value.length < 2) return 'Name must be at least 2 characters';
+          if (!/^[a-zA-Z\s]*$/.test(value)) return 'Name can only contain letters and spaces';
+          return '';
+  
+        case 'age':
+          if (!value) return 'Age is required';
+          const age = parseInt(value);
+          if (isNaN(age) || age < 0 || age > 120) return 'Please enter a valid age';
+          return '';
+  
+        case 'condition':
+          if (!value) return 'Condition is required';
+          return '';
+  
+        case 'admission_date':
+          if (!value) return 'Admission date is required';
+          return '';
+  
+        default:
+          return '';
+      }
+    };
+  
+    const handleLocalChange = (e) => {
+      const { name, value } = e.target;
+      
+      // Update form
+      setLocalForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+  
+      // Validate field
+      const error = validateField(name, value);
+      setErrors(prev => ({
+        ...prev,
+        [name]: error
+      }));
+    };
+  
+    const handleLocalSubmit = (e) => {
+      e.preventDefault();
+  
+      // Validate all fields
+      const newErrors = {};
+      Object.keys(localForm).forEach(key => {
+        const error = validateField(key, localForm[key]);
+        if (error) newErrors[key] = error;
+      });
+  
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+  
+      setForm(localForm);
+      handleSubmit(e);
+    };
+  
+    const getInputClassName = (fieldName) => {
+      return `w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 ${errors[fieldName] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`;
+    };
+  
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center p-6 border-b">
+            <h3 className="text-2xl font-semibold text-gray-900">
+              {isEditing ? 'Edit Participant' : 'Add New Participant'}
+            </h3>
             <button
-              type="button"
               onClick={() => setShowFormModal(false)}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className="text-gray-400 hover:text-gray-500 transition-colors"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              {isEditing ? 'Update Participant' : 'Add Participant'}
+              <X className="h-6 w-6" />
             </button>
           </div>
-        </form>
+  
+          <form onSubmit={handleLocalSubmit} className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={localForm.name}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('name')}
+                />
+                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <select
+                  name="gender"
+                  value={localForm.gender}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('gender')}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Age *</label>
+                <input
+                  type="number"
+                  name="age"
+                  value={localForm.age}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('age')}
+                />
+                {errors.age && <p className="mt-1 text-sm text-red-600">{errors.age}</p>}
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Condition *</label>
+                <select
+                  name="condition"
+                  value={localForm.condition}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('condition')}
+                >
+                  <option value="">Select Condition</option>
+                  <option value="Drug Addiction">Drug Addiction</option>
+                  <option value="Alcoholism">Alcoholism</option>
+                  <option value="Mental Health Issue">Mental Health Issue</option>
+                  <option value="Trauma Recovery">Trauma Recovery</option>
+                  <option value="Physical Rehabilitation">Physical Rehabilitation</option>
+                  <option value="Other">Other</option>
+                </select>
+                {errors.condition && <p className="mt-1 text-sm text-red-600">{errors.condition}</p>}
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Guardian</label>
+                <select
+                  name="guardian_id"
+                  value={localForm.guardian_id}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('guardian_id')}
+                >
+                  <option value="">Select Guardian</option>
+                  {guardians.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Professional</label>
+                <select
+                  name="professional_id"
+                  value={localForm.professional_id}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('professional_id')}
+                >
+                  <option value="">Select Professional</option>
+                  {professionals.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} - {p.profession}</option>
+                  ))}
+                </select>
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Admission Date *</label>
+                <input
+                  type="date"
+                  name="admission_date"
+                  value={localForm.admission_date}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('admission_date')}
+                />
+                {errors.admission_date && <p className="mt-1 text-sm text-red-600">{errors.admission_date}</p>}
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  name="status"
+                  value={localForm.status}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('status')}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Discharged">Discharged</option>
+                  <option value="Transferred">Transferred</option>
+                </select>
+              </div>
+  
+              <div className="col-span-full space-y-2">
+                <label className="block text-lg font-semibold text-gray-700">Notes</label>
+                
+                <div className="flex flex-col gap-2">
+                  <div className="group">
+                    <div className="relative">
+                      <textarea 
+                        name="notes"
+                        value={localForm.notes}
+                        onChange={handleLocalChange}
+                        rows={6}
+                        placeholder="Document observations, treatment notes, or any additional information here..."
+                        className="peer w-full rounded-lg border border-gray-300 bg-white px-4 py-3 
+                          text-sm outline-none transition-all duration-150
+                          placeholder:text-gray-400
+                          hover:border-gray-400
+                          focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                          group-focus-within:border-blue-500"
+                      />
+                      <label className="absolute -top-2 left-3 bg-white px-1 text-xs font-medium 
+                        text-gray-600 transition-all duration-150
+                        peer-placeholder-shown:top-3 peer-placeholder-shown:left-4 
+                        peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-500
+                        peer-focus:-top-2 peer-focus:left-3 peer-focus:text-xs
+                        peer-focus:text-blue-500">
+                        Notes
+                      </label>
+                    </div>
+                    <div className="mt-1 text-right text-xs text-gray-500">
+                      {localForm.notes.length} / 1000 characters
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+  
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowFormModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {isEditing ? 'Update Participant' : 'Add Participant'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const DetailsModal = ({ participant, onClose }) => {
     console.log('Notes value:', {

@@ -21,6 +21,7 @@ import GuardianHelpRequests from './pages/RequestHelp';
 import ProfessionalHelpRequests from './pages/ProfessionalReuquestHelp';
 import AdminHelpDashboard from './pages/AdminHelp';
 import AdminReports from './pages/Report';
+import SendEmail from './pages/Email';
 
 const App = () => {
   return (
@@ -62,6 +63,7 @@ const AppContent = () => {
               <Route path="/professional/progress" element={isLoggedIn ? <ProfessionalProgress /> : <Navigate to="/login" />} />
               <Route path="/professional/programs" element={isLoggedIn ? <ProfessionalPage /> : <Navigate to="/login" />} />
               <Route path="/profile" element={isLoggedIn ? <AdminProfessionalChatPage /> : <Navigate to="/login" />} />
+              <Route path="/sendemail" element={isLoggedIn? <SendEmail /> : <Navigate to="/login" />} />
             </Routes>
           </div>
         </div>
@@ -83,6 +85,7 @@ const AppContent = () => {
       {/* Login route */}
       {!isLoggedIn && (
         <Routes>
+          <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />
           <Route path="/home" element={<Home />} />
           <Route path="/signup" element={<SignUp />} />

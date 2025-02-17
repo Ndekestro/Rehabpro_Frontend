@@ -146,121 +146,274 @@ const ManageUsers = () => {
   const buttonClass = "inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
 
   // Form Modal Component
-  const FormModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h3 className="text-2xl font-semibold text-gray-900">
-            {isEditing ? 'Edit User' : 'Add New User'}
-          </h3>
-          <button
-            onClick={() => setShowModal(false)}
-            className="text-gray-400 hover:text-gray-500 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Names</label>
-              <input type="text" name="name" value={form.name} onChange={handleChange} className={inputClass} required />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">National ID</label>
-              <input 
-                type="text" 
-                name="national_id" 
-                value={form.national_id} 
-                onChange={handleChange} 
-                maxLength={16}
-                className={inputClass} 
-              />
-              <div className="mt-1 text-sm text-gray-500">{form.national_id.length}/16 characters</div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-              <select name="gender" value={form.gender} onChange={handleChange} className={inputClass}>
-                <option value="">Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
-              <input type="text" name="profession" value={form.profession} onChange={handleChange} className={inputClass} />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-              <input type="text" name="address" value={form.address} onChange={handleChange} className={inputClass} />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rehab Reason</label>
-              <textarea 
-                name="rehab_reason" 
-                value={form.rehab_reason} 
-                onChange={handleChange} 
-                className={`${inputClass} h-24 resize-none`}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" name="email" value={form.email} onChange={handleChange} className={inputClass} required />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input type="text" name="username" value={form.username} onChange={handleChange} className={inputClass} required />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <select name="role" value={form.role} onChange={handleChange} className={inputClass} required>
-                <option value="participant">Guardian</option>
-                <option value="professional">Professional</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            {!isEditing && (
+  const FormModal = () => {
+    // Local state for form input
+    const [localForm, setLocalForm] = useState({
+      name: form.name || '',
+      gender: form.gender || '',
+      profession: form.profession || '',
+      national_id: form.national_id || '',
+      address: form.address || '',
+      rehab_reason: form.rehab_reason || '',
+      email: form.email || '',
+      username: form.username || '',
+      role: form.role || 'participant',
+      password: form.password || '',
+    });
+  
+    // State for validation errors
+    const [errors, setErrors] = useState({});
+  
+    const validateField = (name, value) => {
+      switch (name) {
+        case 'name':
+          if (!value) return 'Name is required';
+          if (value.length < 3) return 'Name must be at least 3 characters';
+          if (!/^[a-zA-Z\s]*$/.test(value)) return 'Name can only contain letters and spaces';
+          return '';
+  
+        case 'national_id':
+          if (value && value.length > 0) {
+            if (value.length !== 16) return 'National ID must be exactly 16 characters';
+            if (!/^\d+$/.test(value)) return 'National ID must contain only numbers';
+          }
+          return '';
+  
+        case 'email':
+          if (!value) return 'Email is required';
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email format';
+          return '';
+  
+        case 'username':
+          if (!value) return 'Username is required';
+          if (value.length < 3) return 'Username must be at least 3 characters';
+          if (!/^[a-zA-Z0-9_]*$/.test(value)) return 'Username can only contain letters, numbers, and underscores';
+          return '';
+  
+        case 'password':
+          if (!isEditing) {
+            if (!value) return 'Password is required';
+            if (value.length < 3) return 'Password must be at least 3 characters';
+           
+          }
+          return '';
+  
+        default:
+          return '';
+      }
+    };
+  
+    const handleLocalChange = (e) => {
+      const { name, value } = e.target;
+      
+      // Update form
+      setLocalForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+  
+      // Validate field
+      const error = validateField(name, value);
+      setErrors(prev => ({
+        ...prev,
+        [name]: error
+      }));
+    };
+  
+    const handleLocalSubmit = (e) => {
+      e.preventDefault();
+  
+      // Validate all fields
+      const newErrors = {};
+      Object.keys(localForm).forEach(key => {
+        const error = validateField(key, localForm[key]);
+        if (error) newErrors[key] = error;
+      });
+  
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+  
+      setForm(localForm);
+      handleSubmit(e);
+    };
+  
+    const getInputClassName = (fieldName) => {
+      return `${inputClass} ${errors[fieldName] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`;
+    };
+  
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center p-6 border-b">
+            <h3 className="text-2xl font-semibold text-gray-900">
+              {isEditing ? 'Edit User' : 'Add New User'}
+            </h3>
+            <button
+              onClick={() => setShowModal(false)}
+              className="text-gray-400 hover:text-gray-500"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+  
+          <form onSubmit={handleLocalSubmit} className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input 
-                  type="password" 
-                  name="password" 
-                  value={form.password} 
-                  onChange={handleChange} 
-                  className={inputClass} 
-                  required={!isEditing}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={localForm.name}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('name')}
+                  required
+                />
+                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">National ID</label>
+                <input
+                  type="text"
+                  name="national_id"
+                  value={localForm.national_id}
+                  onChange={handleLocalChange}
+                  maxLength={16}
+                  className={getInputClassName('national_id')}
+                />
+                {errors.national_id ? (
+                  <p className="mt-1 text-sm text-red-600">{errors.national_id}</p>
+                ) : (
+                  <p className="mt-1 text-sm text-gray-500">{localForm.national_id.length}/16 characters</p>
+                )}
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <select 
+                  name="gender"
+                  value={localForm.gender}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('gender')}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                <input
+                  type="text"
+                  name="profession"
+                  value={localForm.profession}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('profession')}
                 />
               </div>
-            )}
-          </div>
-
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setShowModal(false)}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Cancel
-            </button>
-            <button type="submit" className={buttonClass}>
-              {isEditing ? 'Update User' : 'Add User'}
-            </button>
-          </div>
-        </form>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={localForm.address}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('address')}
+                />
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={localForm.email}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('email')}
+                  required
+                />
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
+                <input
+                  type="text"
+                  name="username"
+                  value={localForm.username}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('username')}
+                  required
+                />
+                {errors.username && <p className="mt-1 text-sm text-red-600">{errors.username}</p>}
+              </div>
+  
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                <select
+                  name="role"
+                  value={localForm.role}
+                  onChange={handleLocalChange}
+                  className={getInputClassName('role')}
+                  required
+                >
+                  <option value="participant">Guardian</option>
+                  <option value="professional">Professional</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+  
+              {!isEditing && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={localForm.password}
+                    onChange={handleLocalChange}
+                    className={getInputClassName('password')}
+                    required={!isEditing}
+                  />
+                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                </div>
+              )}
+  
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rehab Reason</label>
+                <textarea
+                  name="rehab_reason"
+                  value={localForm.rehab_reason}
+                  onChange={handleLocalChange}
+                  className={`${getInputClassName('rehab_reason')} h-24 resize-none`}
+                />
+              </div>
+            </div>
+  
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className={buttonClass}
+              >
+                {isEditing ? 'Update User' : 'Add User'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Details Modal Component
   const UserDetailsModal = ({ user, onClose }) => {
