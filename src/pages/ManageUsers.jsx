@@ -52,20 +52,21 @@ const ManageUsers = () => {
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, updatedForm = form) => {
     e.preventDefault();
+  
     try {
-      const url = isEditing ? `${API.baseUrl}/users/${form.id}` : `${API.baseUrl}/users/register`;
+      const url = isEditing ? `${API.baseUrl}/users/${updatedForm.id}` : `${API.baseUrl}/users/register`;
       const method = isEditing ? 'PUT' : 'POST';
-
+  
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(updatedForm),
       });
-
+  
       if (!response.ok) throw new Error('Error saving user');
-
+  
       showSnackbar(isEditing ? 'User updated successfully' : 'User created successfully', 'success');
       resetForm();
       fetchUsers();
@@ -75,6 +76,7 @@ const ManageUsers = () => {
       showSnackbar('Error submitting user', 'error');
     }
   };
+  
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
@@ -235,8 +237,12 @@ const ManageUsers = () => {
         return;
       }
   
-      setForm(localForm);
-      handleSubmit(e);
+      setForm(prevForm => {
+        const updatedForm = { ...prevForm, ...localForm };
+        handleSubmit({ preventDefault: () => {} }, updatedForm);
+        return updatedForm;
+      });
+      
     };
   
     const getInputClassName = (fieldName) => {
