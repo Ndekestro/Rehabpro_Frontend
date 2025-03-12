@@ -853,8 +853,8 @@ const RehabManagement = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">Guardian: {participant.guardian_name || 'None'}</div>
-                        <div className="text-sm text-gray-500">Professional: {participant.professional_name || 'None'}</div>
+                        <div className="text-sm text-gray-900">Guardian: {participant.guardian_first_name || 'None'}</div>
+                        <div className="text-sm text-gray-500">Professional: {participant.professional_first_name || 'None'}</div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(participant.status)}`}>

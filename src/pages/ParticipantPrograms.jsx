@@ -603,7 +603,7 @@ const ParticipantPage = () => {
                         <textarea
                           value={remarks}
                           onChange={(e) => setRemarks(e.target.value)}
-                          placeholder="Add remarks for your progress on this chapter..."
+                          placeholder="Add remarks for this question on this chapter..."
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           rows="3"
                         ></textarea>

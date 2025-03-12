@@ -109,7 +109,7 @@ const GuardianHelpRequests = () => {
                   <option value="">Choose a participant</option>
                   {participants.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} (Condition: {p.condition})
+                      {p.first_name} (Condition: {p.condition})
                     </option>
                   ))}
                 </select>
@@ -195,7 +195,7 @@ const GuardianHelpRequests = () => {
                               <User className="h-4 w-4 text-blue-600" />
                             </div>
                             <span className="text-sm font-medium text-gray-900">
-                              {request.participant_name}
+                              {request.participant_first_name} {request.participant_last_name}
                             </span>
                           </div>
                         </td>
