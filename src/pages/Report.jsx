@@ -186,7 +186,7 @@ const GuardianRow = ({ guardian }) => {
                   {guardian.participants.map((participant) => (
                     <tr key={participant.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {participant.name}
+                        {participant.first_name} {participant.last_name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {participant.age}
@@ -386,7 +386,7 @@ const ReportsPage = () => {
         const professionals = data[0].professionals;
         const headers = ["Name", "Email", "Profession", "Total Part.", "Active", "Programs", "Chapters"];
         const profData = professionals.map(prof => [
-          prof.name,
+          prof.first_name,
           prof.email,
           prof.profession,
           prof.total_participants,
@@ -416,7 +416,7 @@ const ReportsPage = () => {
           // Guardian main info
           createTable(
             ["Name", "Email", "Help Requests", "Total Participants"],
-            [[guardian.name, guardian.email, guardian.total_help_requests, guardian.total_guardian_participants]],
+            [[guardian.first_name, guardian.email, guardian.total_help_requests, guardian.total_guardian_participants]],
             startY,
             { columnWidths: [70, 100, 40, 50] }
           );
@@ -427,7 +427,7 @@ const ReportsPage = () => {
           if (guardian.participants && guardian.participants.length > 0) {
             const partHeaders = ["Name", "Age", "Gender", "Condition", "Status"];
             const partData = guardian.participants.map(p => [
-              p.name,
+              p.first_name,
               p.age,
               p.gender,
               p.condition,
@@ -669,7 +669,7 @@ const ReportsPage = () => {
               {professionals.map((prof, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {prof.name}
+                    {prof.first_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {prof.email}

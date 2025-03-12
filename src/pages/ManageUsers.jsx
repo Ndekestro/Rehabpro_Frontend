@@ -15,7 +15,8 @@ const ManageUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [form, setForm] = useState({
     id: null,
-    name: '',
+    first_name: '',
+    last_name: '',
     gender: '',
     profession: '',
     national_id: '',
@@ -27,6 +28,7 @@ const ManageUsers = () => {
     password: '',
     verified: false,
   });
+  
   const [isEditing, setIsEditing] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -51,6 +53,7 @@ const ManageUsers = () => {
     if (name === 'national_id' && value.length > 16) return;
     setForm({ ...form, [name]: value });
   };
+  
 
   const handleSubmit = async (e, updatedForm = form) => {
     e.preventDefault();
@@ -74,6 +77,9 @@ const ManageUsers = () => {
     } catch (error) {
       console.error('Error submitting user:', error);
       showSnackbar('Error submitting user', 'error');
+      // Add this to your handleSubmit function
+console.log('Submitting form to:', url);
+console.log('Form data:', updatedForm);
     }
   };
   
@@ -120,7 +126,8 @@ const ManageUsers = () => {
   const resetForm = () => {
     setForm({
       id: null,
-      name: '',
+      first_name: '',
+      last_name: '',
       gender: '',
       profession: '',
       national_id: '',
@@ -134,7 +141,6 @@ const ManageUsers = () => {
     });
     setIsEditing(false);
   };
-
   const showSnackbar = (message, severity) => {
     setSnackbar({ open: true, message, severity });
   };
@@ -151,7 +157,8 @@ const ManageUsers = () => {
   const FormModal = () => {
     // Local state for form input
     const [localForm, setLocalForm] = useState({
-      name: form.name || '',
+      first_name: form.first_name || '',
+      last_name: form.last_name || '',
       gender: form.gender || '',
       profession: form.profession || '',
       national_id: form.national_id || '',
@@ -162,16 +169,21 @@ const ManageUsers = () => {
       role: form.role || 'participant',
       password: form.password || '',
     });
-  
     // State for validation errors
     const [errors, setErrors] = useState({});
   
     const validateField = (name, value) => {
       switch (name) {
-        case 'name':
-          if (!value) return 'Name is required';
-          if (value.length < 3) return 'Name must be at least 3 characters';
-          if (!/^[a-zA-Z\s]*$/.test(value)) return 'Name can only contain letters and spaces';
+        case 'first_name':
+          if (!value) return 'First name is required';
+          if (value.length < 1) return 'First name must be at least 1 characters';
+          if (!/^[a-zA-Z\s]*$/.test(value)) return 'First name can only contain letters and spaces';
+          return '';
+          
+        case 'last_name':
+          if (!value) return 'Last name is required';
+          if (value.length < 1) return 'Last name must be at least 1 characters';
+          if (!/^[a-zA-Z\s]*$/.test(value)) return 'Last name can only contain letters and spaces';
           return '';
   
         case 'national_id':
@@ -224,27 +236,36 @@ const ManageUsers = () => {
   
     const handleLocalSubmit = (e) => {
       e.preventDefault();
-  
+    
       // Validate all fields
       const newErrors = {};
       Object.keys(localForm).forEach(key => {
-        const error = validateField(key, localForm[key]);
-        if (error) newErrors[key] = error;
+        if (key === 'first_name' || key === 'last_name' || key === 'email' || key === 'username' || 
+           (!isEditing && key === 'password')) {
+          const error = validateField(key, localForm[key]);
+          if (error) newErrors[key] = error;
+        }
       });
-  
+    
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
         return;
       }
-  
-      setForm(prevForm => {
-        const updatedForm = { ...prevForm, ...localForm };
-        handleSubmit({ preventDefault: () => {} }, updatedForm);
-        return updatedForm;
-      });
+    
+      // Important: Make sure we're including the ID for editing
+      const formToSubmit = {
+        ...localForm
+      };
       
+      if (isEditing && form.id) {
+        formToSubmit.id = form.id;
+      }
+      
+      // Call the parent handleSubmit directly
+      handleSubmit(e, formToSubmit);
     };
-  
+    // Add this to your handleSubmit function
+
     const getInputClassName = (fieldName) => {
       return `${inputClass} ${errors[fieldName] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`;
     };
@@ -266,21 +287,31 @@ const ManageUsers = () => {
   
           <form onSubmit={handleLocalSubmit} className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+              <input
+                type="text"
+                name="first_name"
+                value={localForm.first_name}
+                onChange={handleLocalChange}
+                className={getInputClassName('first_name')}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+              <input
+                type="text"
+                name="last_name"
+                value={localForm.last_name}
+                onChange={handleLocalChange}
+                className={getInputClassName('last_name')}
+                required
+              />
+            </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={localForm.name}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('name')}
-                  required
-                />
-                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-              </div>
-  
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">National ID</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">National ID *</label>
                 <input
                   type="text"
                   name="national_id"
@@ -288,6 +319,7 @@ const ManageUsers = () => {
                   onChange={handleLocalChange}
                   maxLength={16}
                   className={getInputClassName('national_id')}
+                  required
                 />
                 {errors.national_id ? (
                   <p className="mt-1 text-sm text-red-600">{errors.national_id}</p>
@@ -297,12 +329,13 @@ const ManageUsers = () => {
               </div>
   
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
                 <select 
                   name="gender"
                   value={localForm.gender}
                   onChange={handleLocalChange}
                   className={getInputClassName('gender')}
+                  required
                 >
                   <option value="">Select Gender</option>
                   <option value="male">Male</option>
@@ -460,17 +493,17 @@ const ManageUsers = () => {
           <div className="p-6">
             {/* Header Information */}
             <div className="flex items-center justify-between pb-6 border-b">
-              <div className="flex items-center space-x-4">
-                <div className="h-16 w-16 rounded-full bg-blue-600 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">
-                    {user.name?.charAt(0)?.toUpperCase() || '?'}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="text-xl font-semibold text-gray-900">{user.name}</h4>
-                  <p className="text-sm text-gray-500">{user.role}</p>
-                </div>
-              </div>
+            <div className="flex items-center space-x-4">
+  <div className="h-16 w-16 rounded-full bg-blue-600 flex items-center justify-center">
+    <span className="text-2xl font-bold text-white">
+      {user.first_name?.charAt(0)?.toUpperCase() || '?'}
+    </span>
+  </div>
+  <div>
+    <h4 className="text-xl font-semibold text-gray-900">{user.first_name} {user.last_name}</h4>
+    <p className="text-sm text-gray-500">{user.role}</p>
+  </div>
+</div>
               <span className={`px-3 py-1 rounded-full text-sm font-medium
                 ${user.verified 
                   ? 'bg-green-100 text-green-800' 
@@ -554,19 +587,20 @@ const ManageUsers = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
-                          <span className="text-sm font-medium text-white">
-                            {user.name?.charAt(0)?.toUpperCase() || '?'}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.username}</div>
-                        </div>
-                      </div>
-                    </td>
+                  <td className="px-6 py-4">
+  <div className="flex items-center space-x-3">
+    <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
+      <span className="text-sm font-medium text-white">
+        {user.first_name?.charAt(0)?.toUpperCase() || '?'}
+      </span>
+    </div>
+    <div>
+      <div className="text-sm font-medium text-gray-900">{user.first_name} {user.last_name}</div>
+      <div className="text-sm text-gray-500">{user.username}</div>
+    </div>
+  </div>
+</td>
+
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">{user.email}</div>
                       <div className="text-sm text-gray-500">{user.profession}</div>
@@ -579,8 +613,9 @@ const ManageUsers = () => {
                       >
                         {user.verified ? 'Verified' : 'Unverified'}
                       </span>
-                      <div className="text-sm text-gray-500 mt-1">{user.role}</div>
-                    </td>
+                      <div className="text-sm text-gray-500 mt-1">
+  {user.role === 'participant' ? 'guardian' : user.role}
+</div>                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <button

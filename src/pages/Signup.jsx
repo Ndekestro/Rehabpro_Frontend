@@ -4,7 +4,8 @@ import API from '../api';
 
 const SignUp = () => {
   const [form, setForm] = useState({
-    name: '',
+    first_name: '',
+    last_name: '',
     national_id: '',
     address: '',
     rehab_reason: '',
@@ -48,7 +49,8 @@ const SignUp = () => {
       if (response.ok) {
         setMessage('Registration successful! Please wait for admin verification.');
         setForm({
-          name: '',
+          first_name: '',
+          last_name: '',
           national_id: '',
           address: '',
           rehab_reason: '',
@@ -123,16 +125,32 @@ const SignUp = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-4">
-                    {/* Name Input */}
+                    {/* First Name Input */}
                     <div>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <input
                           type="text"
-                          name="name"
-                          value={form.name}
+                          name="first_name"
+                          value={form.first_name}
                           onChange={handleChange}
-                          placeholder="Full Name"
+                          placeholder="First Name"
+                          required
+                          className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Last Name Input */}
+                    <div>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                        <input
+                          type="text"
+                          name="last_name"
+                          value={form.last_name}
+                          onChange={handleChange}
+                          placeholder="Last Name"
                           required
                           className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors"
                         />

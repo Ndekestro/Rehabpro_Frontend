@@ -13,16 +13,20 @@ const RehabManagement = () => {
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [form, setForm] = useState({
     id: null,
-    name: '',
+    first_name: '',
+    last_name: '',
     gender: 'Male',
     age: '',
+    national_id: '',
     condition: '',
     guardian_id: '',
     professional_id: '',
     admission_date: '',
     status: 'Active',
     notes: '',
-  });
+    reason: '',
+    time_period: ''
+  });  
   const [guardians, setGuardians] = useState([]);
   const [professionals, setProfessionals] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -78,38 +82,46 @@ const RehabManagement = () => {
   // ✅ Create or Update a Rehabilitation Participant
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    console.log("🚀 Sending Data to API:", form); // ✅ Log before sending
+
     try {
-      const url = isEditing 
-        ? `${API.baseUrl}/rehab/participants/${form.id}`
-        : `${API.baseUrl}/rehab/participants`;
-      const method = isEditing ? 'PUT' : 'POST';
-  
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          gender: form.gender,
-          age: form.age,
-          condition: form.condition,
-          guardian_id: form.guardian_id,
-          professional_id: form.professional_id,
-          admission_date: form.admission_date,
-          status: form.status,
-          notes: form.notes || '',  // ✅ Ensures notes is always sent
-        }),
-      });
-  
-      if (!response.ok) throw new Error('Error saving participant');
-  
-      setMessage(isEditing ? 'Participant updated successfully' : 'Participant added successfully');
-      resetForm();
-      fetchParticipants();
-      setShowFormModal(false);
+        const url = isEditing 
+            ? `${API.baseUrl}/rehab/participants/${form.id}`
+            : `${API.baseUrl}/rehab/participants`;
+        const method = isEditing ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                first_name: form.first_name.trim(),   // ✅ Trim to remove accidental spaces
+                last_name: form.last_name.trim(),
+                gender: form.gender,
+                age: form.age,
+                national_id: form.national_id || null,  // ✅ Ensure optional fields are handled
+                condition: form.condition,
+                guardian_id: form.guardian_id,
+                professional_id: form.professional_id,
+                admission_date: form.admission_date,
+                status: form.status,
+                notes: form.notes.trim() || '',  // ✅ Ensure empty fields are not `undefined`
+                reason: form.reason.trim() || '',
+                time_period: form.time_period.trim() || ''
+            }),
+        });
+
+        if (!response.ok) throw new Error('Error saving participant');
+
+        setMessage(isEditing ? 'Participant updated successfully' : 'Participant added successfully');
+        resetForm();
+        fetchParticipants();
+        setShowFormModal(false);
     } catch (err) {
-      setError('Error submitting participant');
+        setError('Error submitting participant');
     }
-  };
+};
+ 
   
   // ✅ Delete a Rehabilitation Participant
   const handleDelete = async (id) => {
@@ -140,15 +152,19 @@ const RehabManagement = () => {
   const resetForm = () => {
     setForm({
       id: null,
-      name: '',
+      first_name: '',
+      last_name: '',
       gender: 'Male',
       age: '',
+      national_id: '',
       condition: '',
       guardian_id: '',
       professional_id: '',
       admission_date: '',
       status: 'Active',
       notes: '',
+      reason: '',
+      time_period: ''
     });
     setIsEditing(false);
     setShowFormModal(false); // Also close the modal
@@ -176,17 +192,21 @@ const RehabManagement = () => {
   const FormModal = () => {
     // Local state for form input
     const [localForm, setLocalForm] = useState({
-      name: form.name || '',
+      first_name: form.first_name || '',
+      last_name: form.last_name || '',
       gender: form.gender || '',
       age: form.age || '',
+      national_id: form.national_id || '',
       condition: form.condition || '',
       guardian_id: form.guardian_id || '',
       professional_id: form.professional_id || '',
       admission_date: form.admission_date || '',
       status: form.status || 'Active',
-      notes: form.notes || ''
+      notes: form.notes || '', // Ensure notes is always a string
+      reason: form.reason || '', // Ensure reason is always a string
+      time_period: form.time_period || '' // Ensure time_period is always a string
     });
-  
+    
     // State for validation errors
     const [errors, setErrors] = useState({});
   
@@ -274,32 +294,31 @@ const RehabManagement = () => {
   
           <form onSubmit={handleLocalSubmit} className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={localForm.name}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('name')}
-                />
-                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-              </div>
-  
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                <select
-                  name="gender"
-                  value={localForm.gender}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('gender')}
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-  
+            <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+  <input
+    type="text"
+    name="first_name"
+    value={localForm.first_name}
+    onChange={handleLocalChange}
+    className={getInputClassName('first_name')}
+  />
+  {errors.first_name && <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>}
+</div>
+
+
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+  <input
+    type="text"
+    name="last_name"
+    value={localForm.last_name}
+    onChange={handleLocalChange}
+    className={getInputClassName('last_name')}
+  />
+  {errors.last_name && <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>}
+</div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Age *</label>
                 <input
@@ -418,6 +437,53 @@ const RehabManagement = () => {
                     <div className="mt-1 text-right text-xs text-gray-500">
                       {localForm.notes.length} / 1000 characters
                     </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">National ID (Optional)</label>
+                  <input
+                    type="text"
+                    name="national_id"
+                    value={localForm.national_id}
+                    onChange={(e) => {
+                      // Limit to 16 characters
+                      if (e.target.value.length <= 16) {
+                        handleLocalChange(e);
+                      }
+                    }}
+                    maxLength={16}
+                    className={getInputClassName('national_id')}
+                    placeholder="16 characters maximum"
+                  />
+                  {errors.national_id && <p className="mt-1 text-sm text-red-600">{errors.national_id}</p>}
+                  <p className="mt-1 text-xs text-gray-500">{localForm.national_id?.length || 0}/16 characters</p>
+                </div>
+
+<div className="col-span-full">
+  <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Admission *</label>
+  <textarea 
+    name="reason"
+    value={localForm.reason}
+    onChange={handleLocalChange}
+    rows={4}
+    placeholder="Explain why the participant is admitted..."
+    className={getInputClassName('reason')}
+  />
+  {errors.reason && <p className="mt-1 text-sm text-red-600">{errors.reason}</p>}
+  <div className="mt-1 text-right text-xs text-gray-500">
+    {localForm.reason.length} / 1000 characters
+  </div>
+</div>
+
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Expected Time Period *</label>
+  <input
+    type="text"
+    name="time_period"
+    value={localForm.time_period}
+    onChange={handleLocalChange}
+    className={getInputClassName('time_period')}
+  />
+  {errors.time_period && <p className="mt-1 text-sm text-red-600">{errors.time_period}</p>}
+</div>
                   </div>
                 </div>
               </div>
@@ -505,12 +571,110 @@ const RehabManagement = () => {
             {/* Details Grid */}
             <div className="mt-6 space-y-1">
               <DetailRow icon={User} label="Gender" value={participant.gender} />
+              <DetailRow icon={User} label="Name" value={`${participant.first_name} ${participant.last_name}`} />
+              <DetailRow icon={FileText} label="National ID" value={participant.national_id} />
+              <DetailRow icon={AlertCircle} label="Reason for Admission" value={participant.reason} />
+{/* Expected Time Period with remaining days calculation */}
+<DetailRow 
+  icon={Clock} 
+  label="Expected Time Period" 
+  value={
+    <>
+      <div className="font-medium">{participant.time_period}</div>
+      <div className="text-sm text-gray-600">
+        {(() => {
+          if (participant.admission_date && participant.time_period) {
+            try {
+              // Parse the time period (assuming format like "10 days", "3 months", etc.)
+              const timePattern = /(\d+)\s*(day|days|week|weeks|month|months|year|years)/i;
+              const match = participant.time_period.match(timePattern);
+              
+              if (match) {
+                const amount = parseInt(match[1]);
+                const unit = match[2].toLowerCase();
+                
+                // Calculate end date from admission date and time period
+                const admissionDate = new Date(participant.admission_date);
+                let expectedEndDate = new Date(admissionDate);
+                
+                switch(unit) {
+                  case 'day':
+                  case 'days':
+                    expectedEndDate.setDate(admissionDate.getDate() + amount);
+                    break;
+                  case 'week':
+                  case 'weeks':
+                    expectedEndDate.setDate(admissionDate.getDate() + (amount * 7));
+                    break;
+                  case 'month':
+                  case 'months':
+                    expectedEndDate.setMonth(admissionDate.getMonth() + amount);
+                    break;
+                  case 'year':
+                  case 'years':
+                    expectedEndDate.setFullYear(admissionDate.getFullYear() + amount);
+                    break;
+                }
+                
+                // Calculate days remaining
+                const today = new Date();
+                const timeDiff = expectedEndDate - today;
+                const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                
+                if (daysRemaining > 0) {
+                  return `${daysRemaining} days remaining`;
+                } else if (daysRemaining === 0) {
+                  return "Last day today";
+                } else {
+                  return `${Math.abs(daysRemaining)} days overdue`;
+                }
+              }
+              return "Unable to calculate remaining time";
+            } catch (error) {
+              console.error("Error calculating remaining days:", error);
+              return "Unable to calculate remaining time";
+            }
+          }
+          return "No time information available";
+        })()}
+      </div>
+    </>
+  } 
+/>
+
+{/* Admission Date */}
+<DetailRow 
+  icon={Calendar} 
+  label="Admission Date" 
+  value={
+    <>
+      <div>{new Date(participant.admission_date).toLocaleDateString()}</div>
+      <div className="text-sm text-gray-600">
+        {(() => {
+          if (participant.admission_date) {
+            const admissionDate = new Date(participant.admission_date);
+            const today = new Date();
+            const timeDiff = today - admissionDate;
+            const daysPassed = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            
+            if (daysPassed === 0) {
+              return "Admitted today";
+            } else if (daysPassed === 1) {
+              return "Admitted yesterday";
+            } else {
+              return `${daysPassed} days since admission`;
+            }
+          }
+          return "";
+        })()}
+      </div>
+    </>
+  }
+/>
               <DetailRow icon={Calendar} label="Age" value={participant.age} />
               <DetailRow icon={Heart} label="Condition" value={participant.condition} />
               <DetailRow icon={Users} label="Guardian" value={participant.guardian_name} />
               <DetailRow icon={Activity} label="Professional" value={participant.professional_name} />
-              <DetailRow icon={Clock} label="Admission Date" value={participant.admission_date} />
-              
               {/* Notes Section */}
              {/* Notes Section */}
 <div className="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -589,8 +753,8 @@ const RehabManagement = () => {
                           </span>
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{participant.name}</div>
-                          <div className="text-sm text-gray-500">Age: {participant.age}</div>
+                        <div className="text-sm font-medium text-gray-900">{participant.first_name} {participant.last_name}</div>
+                        <div className="text-sm text-gray-500">Age: {participant.age}</div>
                         </div>
                       </div>
                     </td>

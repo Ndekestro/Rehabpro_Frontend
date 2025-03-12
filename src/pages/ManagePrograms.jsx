@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api';
-import { X, Edit2, Trash2, Plus, AlertCircle } from 'lucide-react';
+import { X, Edit2, Trash2, Plus, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 const ManagePrograms = () => {
   const [programs, setPrograms] = useState([]);
@@ -14,6 +14,7 @@ const ManagePrograms = () => {
     created_by: '',
     progress: '',
     remarks: '',
+    status: 'active',
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,6 +92,7 @@ const ManagePrograms = () => {
         created_by: userData ? userData.id : '',
         progress: '',
         remarks: '',
+        status: 'active',
       });
       setIsEditing(false);
       setShowModal(false);
@@ -113,7 +115,10 @@ const ManagePrograms = () => {
   };
 
   const handleEdit = (program) => {
-    setForm(program);
+    setForm({
+      ...program,
+      status: program.status || 'active'
+    });
     setIsEditing(true);
     setShowModal(true);
   };
@@ -130,6 +135,7 @@ const ManagePrograms = () => {
       created_by: userData ? userData.id : '',
       progress: '',
       remarks: '',
+      status: 'active',
     });
     setIsEditing(false);
     setShowModal(true);
@@ -137,106 +143,122 @@ const ManagePrograms = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="flex flex-col items-center space-y-4 animate-pulse">
+          <div className="relative">
+            <div className="h-16 w-16 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+            <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-indigo-400 border-t-transparent animate-spin delay-150"></div>
+          </div>
+          <p className="text-indigo-600 font-semibold text-lg tracking-wide">Loading Programs...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-blue-600 shadow-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Manage Programs</h1>
+            <h1 className="text-3xl font-bold text-white tracking-tight animate-fade-in-down">Program Surveys Management</h1>
             <button
               onClick={openModal}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="group flex items-center px-6 py-2.5 bg-white text-indigo-600 rounded-lg shadow-md hover:bg-indigo-50 hover:text-indigo-700 transform hover:-translate-y-0.5 transition-all duration-300"
             >
-              <Plus className="h-5 w-5 mr-2" />
-              Add New Program
+              <Plus className="h-5 w-5 mr-2 group-hover:animate-pulse" />
+              <span className="font-semibold">Add Program</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transform transition-all duration-300 hover:shadow-xl">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50/80 backdrop-blur-sm">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name & Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Progress & Remarks
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Assignment
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  {['Program Details', 'Assignment', 'Status', 'Actions'].map((header, index) => (
+                    <th
+                      key={header}
+                      className={`px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider ${
+                        index === 3 ? 'text-right' : ''
+                      }`}
+                    >
+                      {header}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200">
                 {programs.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12">
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">No Programs Found</h3>
-                        <p className="text-gray-500">Get started by creating a new program.</p>
+                    <td colSpan="4" className="px-6 py-20">
+                      <div className="flex flex-col items-center justify-center text-center space-y-4 animate-fade-in">
+                        <AlertCircle className="h-20 w-20 text-gray-300" />
+                        <h3 className="text-xl font-semibold text-gray-900">No Programs Available</h3>
+                        <p className="text-gray-500 max-w-md">Create your first program by clicking the "Add Program" button above.</p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   programs.map((program) => (
-                    <tr key={program.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <div className="text-sm font-medium text-gray-900">{program.name}</div>
-                          <div className="text-sm text-gray-500 mt-1">{program.description}</div>
+                    <tr
+                      key={program.id}
+                      className="hover:bg-gray-50 transition-all duration-200 transform hover:-translate-y-0.5"
+                    >
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col space-y-1">
+                          <div className="text-sm font-semibold text-gray-900 line-clamp-1">{program.name}</div>
+                          <div className="text-sm text-gray-600 line-clamp-2">{program.description}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <div className="text-sm text-gray-900">{program.progress || 'No progress updates'}</div>
-                          <div className="text-sm text-gray-500 mt-1">{program.remarks || 'No remarks'}</div>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col space-y-1">
+                          <div className="text-sm text-gray-900 font-medium">
+                            {program.assigned_to_name || 'Not Assigned'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            By: {program.created_by_name === 'participant' ? 'Guardian' : program.created_by_name}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <div className="text-sm text-gray-900">{program.assigned_to_name || 'Unassigned'}</div>
-                          <div className="text-sm text-gray-500 mt-1">Created by: {program.created_by_name}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          program.status === 'Active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {program.status}
+                      <td className="px-6 py-5">
+                        <span
+                          className={`px-3 py-1.5 inline-flex items-center text-xs font-semibold rounded-full shadow-sm ${
+                            program.status === 'active'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {program.status === 'active' ? (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-1 animate-pulse" />
+                              Active
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="h-4 w-4 mr-1" />
+                              Inactive
+                            </>
+                          )}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-5 text-right">
                         <div className="flex justify-end space-x-3">
                           <button
                             onClick={() => handleEdit(program)}
-                            className="text-yellow-600 hover:text-yellow-900 p-2 hover:bg-yellow-50 rounded-full transition-colors duration-200"
+                            className="p-2 text-yellow-600 hover:text-yellow-700 bg-yellow-50 hover:bg-yellow-100 rounded-full transition-all duration-200 transform hover:scale-110"
+                            title="Edit Program"
                           >
                             <Edit2 className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleDelete(program.id)}
-                            className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-full transition-colors duration-200"
+                            className="p-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-full transition-all duration-200 transform hover:scale-110"
+                            title="Delete Program"
                           >
                             <Trash2 className="h-5 w-5" />
                           </button>
@@ -251,116 +273,126 @@ const ManagePrograms = () => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Enhanced Modal */}
       {showModal && (
-        <div className="fixed inset-0 overflow-y-auto z-50">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto animate-fade-in">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity"></div>
 
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="flex justify-between items-center px-6 py-4 bg-gray-50">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {isEditing ? 'Edit Program' : 'Create New Program'}
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-500 focus:outline-none"
-                >
-                  <X className="h-6 w-6" />
-                </button>
+            <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all duration-300 scale-95 animate-modal-in">
+              <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 rounded-t-2xl">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-white tracking-tight">
+                    {isEditing ? 'Edit Program' : 'New Program'}
+                  </h3>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="p-1 text-white hover:text-gray-200 rounded-full hover:bg-white/10 transition-all duration-200"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
               </div>
 
-              <form onSubmit={handleSubmit}>
-                <div className="px-6 py-4">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Program Name</label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={form.name}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        required
-                      />
-                    </div>
+              <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Program Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-gray-50/50"
+                      placeholder="Enter program name"
+                      required
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Description</label>
-                      <input
-                        type="text"
-                        name="description"
-                        value={form.description}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        required
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                    <input
+                      type="text"
+                      name="description"
+                      value={form.description}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-gray-50/50"
+                      placeholder="Program description"
+                      required
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Assign Professional</label>
-                      <select
-                        name="assigned_to"
-                        value={form.assigned_to}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        required
-                      >
-                        <option value="">Select Professional</option>
-                        {professionals.map((professional) => (
-                          <option key={professional.id} value={professional.id}>
-                            {professional.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Assign To</label>
+                    <select
+                      name="assigned_to"
+                      value={form.assigned_to}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-gray-50/50"
+                      required
+                    >
+                      <option value="">Select Professional</option>
+                      {professionals.map((professional) => (
+                        <option key={professional.id} value={professional.id}>
+                          {professional.first_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Progress Details</label>
-                      <textarea
-                        name="progress"
-                        value={form.progress}
-                        onChange={handleChange}
-                        rows="3"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <div className="flex space-x-6">
+                      {[
+                        { value: 'active', label: 'Active' },
+                        { value: 'inactive', label: 'Inactive' },
+                      ].map((status) => (
+                        <label key={status.value} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="status"
+                            value={status.value}
+                            checked={form.status === status.value}
+                            onChange={handleChange}
+                            className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                          />
+                          <span className="text-sm text-gray-700">{status.label}</span>
+                        </label>
+                      ))}
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Remarks</label>
-                      <textarea
-                        name="remarks"
-                        value={form.remarks}
-                        onChange={handleChange}
-                        rows="3"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>
+                    <textarea
+                      name="remarks"
+                      value={form.remarks}
+                      onChange={handleChange}
+                      rows="3"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-gray-50/50"
+                      placeholder="Additional notes or remarks"
+                    />
                   </div>
                 </div>
 
-                <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200 transform hover:-translate-y-0.5"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-all duration-200 transform hover:-translate-y-0.5 flex items-center"
                   >
                     {isSubmitting ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      <>
+                        <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                         {isEditing ? 'Updating...' : 'Creating...'}
-                      </div>
+                      </>
                     ) : (
                       isEditing ? 'Update Program' : 'Create Program'
                     )}
@@ -371,6 +403,43 @@ const ManagePrograms = () => {
           </div>
         </div>
       )}
+
+      {/* Custom Animations */}
+      <style jsx>{`
+        @keyframes fadeInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-fade-in-down {
+          animation: fadeInDown 0.5s ease-out;
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .animate-modal-in {
+          animation: modalIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
