@@ -660,7 +660,6 @@ const ReportsPage = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profession</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Participants</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Active</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Programs</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Chapters</th>
               </tr>
@@ -679,9 +678,6 @@ const ReportsPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
                     {prof.total_participants}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
-                    {prof.active_participants}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
                     {prof.total_programs}
