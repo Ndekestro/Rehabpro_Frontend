@@ -106,11 +106,11 @@ const AssignedParticipants = () => {
                         <div className="flex items-center space-x-3">
                           <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
                             <span className="text-white font-semibold">
-                              {p.name?.charAt(0)?.toUpperCase()}
+                              {p.first_name?.charAt(0)?.toUpperCase()}
                             </span>
                           </div>
                           <div>
-                            <div className="font-semibold text-gray-900">{p.name}</div>
+                            <div className="font-semibold text-gray-900">{p.first_name}</div>
                             <div className="text-sm text-gray-500 flex items-center">
                               <User className="h-3 w-3 mr-1" />
                               {p.gender}, {p.age} years
@@ -119,7 +119,7 @@ const AssignedParticipants = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{p.guardian_name}</div>
+                        <div className="font-medium text-gray-900">{p.guardian_first_name}</div>
                         <div className="text-sm text-gray-500">{p.guardian_email}</div>
                       </td>
                       <td className="px-6 py-4">
@@ -170,14 +170,14 @@ const AssignedParticipants = () => {
                   <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
                       <span className="text-white font-semibold">
-                        {selectedParticipant.name?.charAt(0)?.toUpperCase()}
+                        {selectedParticipant.first_name?.charAt(0)?.toUpperCase()}
                       </span>
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900">
                         Update Status
                       </h3>
-                      <p className="text-sm text-gray-500">{selectedParticipant.name}</p>
+                      <p className="text-sm text-gray-500">{selectedParticipant.first_name}</p>
                     </div>
                   </div>
                   <button 
