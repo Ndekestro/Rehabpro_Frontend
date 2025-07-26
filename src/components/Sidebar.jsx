@@ -5,7 +5,7 @@ import {
   BarChart, LogOut, ChevronLeft, ChevronRight,
   Home, BookOpen, Award, Settings, HelpCircle,
   UserCircle, Activity, Heart, Brain, FileText,
-  Shield, Gauge,MessageSquareWarning
+  Shield, Gauge, MessageSquareWarning
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -117,7 +117,7 @@ const Sidebar = () => {
       <SidebarSection title="Management">
         <SidebarItem 
           icon={BookOpen} 
-          label="Programs" 
+          label="Surveys" 
           path="/programs"
         />
         <SidebarItem 
@@ -134,6 +134,14 @@ const Sidebar = () => {
           icon={MessageSquareWarning} 
           label="Reports" 
           path="/reports"
+        />
+      </SidebarSection>
+
+      <SidebarSection title="Participants Report">
+        <SidebarItem 
+          icon={MessageSquareWarning} 
+          label="Participants Report" 
+          path="/participantsreport"
         />
       </SidebarSection>
 
@@ -180,7 +188,6 @@ const Sidebar = () => {
         />
       </SidebarSection>
 
-
       <SidebarSection title="Resources">
         <SidebarItem 
           icon={FileText} 
@@ -225,13 +232,13 @@ const Sidebar = () => {
 
   return (
     <div 
-      className={`bg-gradient-to-b from-blue-900 to-blue-950 min-h-screen
+      className={`bg-gradient-to-b from-blue-900 to-blue-950 h-screen
         fixed top-0 left-0 shadow-xl transition-all duration-300 
         ${isExpanded ? 'w-64' : 'w-20'} z-50
-        border-r border-blue-800/50`}
+        border-r border-blue-800/50 flex flex-col`}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-5 border-b border-blue-800/50">
+      {/* Header - Fixed at top */}
+      <div className="flex items-center justify-between p-5 border-b border-blue-800/50 flex-shrink-0">
         {isExpanded && (
           <div className="flex items-center space-x-2">
             <Gauge className="w-6 h-6 text-blue-300" />
@@ -250,15 +257,17 @@ const Sidebar = () => {
         </button>
       </div>
 
-      {/* Navigation */}
-      <div className="py-6 space-y-4">
+      {/* Navigation - Scrollable middle section */}
+      <div className="flex-1 overflow-y-auto py-6 space-y-4 min-h-0
+        scrollbar-thin scrollbar-track-blue-900/50 scrollbar-thumb-blue-700/50 
+        hover:scrollbar-thumb-blue-600/70">
         {role === 'admin' && renderAdminItems()}
         {role === 'professional' && renderProfessionalItems()}
         {role === 'participant' && renderParticipantItems()}
       </div>
 
-      {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-800/50">
+      {/* Footer - Fixed at bottom */}
+      <div className="flex-shrink-0 p-4 border-t border-blue-800/50">
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2

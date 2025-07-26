@@ -187,11 +187,18 @@ console.log('Form data:', updatedForm);
           return '';
   
         case 'national_id':
-          if (value && value.length > 0) {
-            if (value.length !== 16) return 'National ID must be exactly 16 characters';
-            if (!/^\d+$/.test(value)) return 'National ID must contain only numbers';
-          }
-          return '';
+  if (!value) return 'National ID is required';
+  if (value.length !== 16) return 'National ID must be exactly 16 characters';
+  if (!/^\d+$/.test(value)) return 'National ID must contain only numbers';
+  
+  // Extract birth year from positions 1-4 (0-indexed)
+  const birthYear = parseInt(value.substring(1, 5));
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - birthYear;
+  
+  if (age < 18) return 'You must be at least 18 years old';
+  
+  return '';
   
         case 'email':
           if (!value) return 'Email is required';

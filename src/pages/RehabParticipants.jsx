@@ -205,12 +205,21 @@ const RehabManagement = () => {
           return '';
 
         case 'national_id':
-          if (value && !/^[a-zA-Z0-9]*$/.test(value)) 
-            return 'National ID should only contain letters and numbers';
-          return '';
+  if (!value) return 'National ID is required';
+  if (value.length !== 16) return 'National ID must be exactly 16 characters';
+  if (!/^\d+$/.test(value)) return 'National ID must contain only numbers';
   
-        default:
-          return '';
+  // Extract birth year from positions 1-4 (0-indexed)
+  const birthYear = parseInt(value.substring(1, 5));
+  const currentYear = new Date().getFullYear();
+  const userAge = currentYear - birthYear;
+  
+  if (userAge < 16) return 'You must be at least 16 years old';
+  
+  return '';
+
+default:
+  return '';
       }
     };
   
