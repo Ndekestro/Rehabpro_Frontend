@@ -23,6 +23,7 @@ import AdminHelpDashboard from './pages/AdminHelp';
 import AdminReports from './pages/Report';
 import SendEmail from './pages/Email';
 import ReportsDashboard from './pages/ParticipantsReport';
+import GuardianParticipants from './pages/GuardianParticipants';
 
 const App = () => {
   return (
@@ -139,6 +140,7 @@ const AppContent = () => {
               <Route path="/professional/progress" element={isLoggedIn ? <ProfessionalProgress /> : <Navigate to="/login" />} />
               <Route path="/professional/programs" element={isLoggedIn ? <ProfessionalPage /> : <Navigate to="/login" />} />
               <Route path="/profile" element={isLoggedIn ? <AdminProfessionalChatPage /> : <Navigate to="/login" />} />
+              
               <Route path="/sendemail" element={isLoggedIn? <SendEmail /> : <Navigate to="/login" />} />
             </Routes>
           </div>
@@ -153,6 +155,7 @@ const AppContent = () => {
             <Route path="/home" element={<Home />} />
             <Route path="/help" element={<GuardianHelpRequests />} />
             <Route path="/chats" element={<ParticipantChatPage />} />
+            <Route path="/yourparticipants" element={<GuardianParticipants />} />
           </Routes>
         </div>
       )}

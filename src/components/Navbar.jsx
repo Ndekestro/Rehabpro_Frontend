@@ -135,7 +135,16 @@ const Navbar = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
                 )}
               </Link>
-
+<Link 
+                to="/yourparticipants" 
+                className={navLinkClass('/help')}
+              >
+                <HelpCircle className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                <span>Your Participant/Member</span>
+                {isActivePath('/help') && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
+                )}
+              </Link>
              
               {/* Enhanced User Profile */}
               <div className="flex items-center ml-4">
@@ -268,9 +277,9 @@ const Navbar = () => {
               <HelpCircle className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
               <span className="font-semibold">Request Help</span>
             </Link>
-            
-            <Link
-              to="/notifications"
+
+             <Link
+              to="/yourparticipants"
               className="
                 flex items-center gap-4 px-4 py-4 rounded-xl
                 text-white bg-gradient-to-r from-transparent to-transparent
@@ -280,28 +289,12 @@ const Navbar = () => {
               "
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <Bell className="h-6 w-6 group-hover:animate-pulse" />
-              <span className="font-semibold">Notifications</span>
-              <div className="ml-auto relative">
-                <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg">3</div>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-ping opacity-75" />
-              </div>
+              <HelpCircle className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
+              <span className="font-semibold">Your Participant/Member</span>
             </Link>
             
-            <Link
-              to="/settings"
-              className="
-                flex items-center gap-4 px-4 py-4 rounded-xl
-                text-white bg-gradient-to-r from-transparent to-transparent
-                hover:from-white/10 hover:to-white/5 backdrop-blur-sm
-                transition-all duration-300 border border-transparent hover:border-white/20
-                transform hover:translate-x-2 hover:shadow-lg group
-              "
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <Settings className="h-6 w-6 group-hover:rotate-90 transition-transform duration-500" />
-              <span className="font-semibold">Settings</span>
-            </Link>
+            
+           
 
             <div className="pt-4 border-t border-white/20 mt-4"></div>
 
