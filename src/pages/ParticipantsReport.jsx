@@ -632,43 +632,238 @@ const ReportsDashboard = () => {
             </div>
           </div>
         )}
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Status Distribution */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">Status Distribution</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%" cy="50%" outerRadius={80}
-                  dataKey="count" nameKey="status"
-                  fill="#8884d8"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+       {/* Charts Section */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+  {/* Status Distribution */}
+  <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
+            <UserCheck className="w-5 h-5 text-white" />
           </div>
-
-          {/* Monthly Admissions */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">Monthly Admissions</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="admissions_count" stroke="#3B82F6" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          Status Distribution
+        </h3>
+        <p className="text-gray-500 text-sm mt-1">Current participant status breakdown</p>
+      </div>
+      <div className="text-right">
+        <div className="text-2xl font-bold text-blue-700">
+          {statusData.reduce((sum, item) => sum + item.count, 0)}
         </div>
+        <div className="text-xs text-gray-500 uppercase tracking-wide">Total</div>
+      </div>
+    </div>
+    
+    <div className="relative">
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <defs>
+            <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#3B82F6" />
+              <stop offset="100%" stopColor="#1E40AF" />
+            </linearGradient>
+            <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#10B981" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F59E0B" />
+              <stop offset="100%" stopColor="#D97706" />
+            </linearGradient>
+            <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#EF4444" />
+              <stop offset="100%" stopColor="#DC2626" />
+            </linearGradient>
+          </defs>
+          <Pie
+            data={statusData}
+            cx="50%" 
+            cy="50%" 
+            outerRadius={100}
+            innerRadius={40}
+            dataKey="count" 
+            nameKey="status"
+            strokeWidth={3}
+            stroke="#ffffff"
+          >
+            {statusData.map((entry, index) => {
+              const gradients = ['url(#blueGradient)', 'url(#greenGradient)', 'url(#orangeGradient)', 'url(#redGradient)'];
+              return (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={gradients[index % gradients.length]}
+                />
+              );
+            })}
+          </Pie>
+          <Tooltip 
+            contentStyle={{
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              border: 'none',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              padding: '12px'
+            }}
+            formatter={(value, name) => [
+              <span className="font-semibold text-blue-700">{value} participants</span>, 
+              <span className="font-medium">{name}</span>
+            ]}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      
+      {/* Center Text */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-700">
+            {statusData.reduce((sum, item) => sum + item.count, 0)}
+          </div>
+          <div className="text-xs text-gray-500 uppercase tracking-wide">Participants</div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Legend */}
+    <div className="mt-6 grid grid-cols-2 gap-3">
+      {statusData.map((item, index) => {
+        const colors = ['bg-blue-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500'];
+        return (
+          <div key={item.status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`}></div>
+              <span className="text-sm font-medium text-gray-700">{item.status}</span>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-bold text-gray-900">{item.count}</div>
+              <div className="text-xs text-gray-500">{item.percentage}%</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
 
+  {/* Monthly Admissions */}
+  <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-white" />
+          </div>
+          Monthly Admissions
+        </h3>
+        <p className="text-gray-500 text-sm mt-1">Admission trends over time</p>
+      </div>
+      <div className="text-right">
+        <div className="text-2xl font-bold text-blue-700">
+          {monthlyData.reduce((sum, item) => sum + (item.admissions_count || 0), 0)}
+        </div>
+        <div className="text-xs text-gray-500 uppercase tracking-wide">Total</div>
+      </div>
+    </div>
+    
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+        <defs>
+          <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.05}/>
+          </linearGradient>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#3B82F6" floodOpacity="0.3"/>
+          </filter>
+        </defs>
+        <CartesianGrid 
+          strokeDasharray="3 3" 
+          stroke="#E5E7EB" 
+          strokeOpacity={0.6}
+        />
+        <XAxis 
+          dataKey="month_name" 
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 12, fill: '#6B7280' }}
+          tickMargin={10}
+        />
+        <YAxis 
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 12, fill: '#6B7280' }}
+          tickMargin={10}
+        />
+        <Tooltip 
+          contentStyle={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            border: 'none',
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+            padding: '16px'
+          }}
+          labelStyle={{ color: '#374151', fontWeight: 'bold', marginBottom: '8px' }}
+          formatter={(value, name) => [
+            <span className="font-semibold text-blue-700">{value} admissions</span>, 
+            <span className="font-medium">Monthly Total</span>
+          ]}
+        />
+        
+        {/* Area fill */}
+        <Line
+          type="monotone"
+          dataKey="admissions_count"
+          stroke="url(#areaGradient)"
+          strokeWidth={0}
+          fill="url(#areaGradient)"
+          dot={false}
+          activeDot={false}
+        />
+        
+        {/* Main line */}
+        <Line 
+          type="monotone" 
+          dataKey="admissions_count" 
+          stroke="#1E40AF"
+          strokeWidth={4}
+          filter="url(#shadow)"
+          dot={{ 
+            fill: '#1E40AF', 
+            strokeWidth: 3, 
+            stroke: '#ffffff',
+            r: 6,
+            filter: 'url(#shadow)'
+          }}
+          activeDot={{ 
+            r: 8, 
+            fill: '#1E40AF',
+            stroke: '#ffffff',
+            strokeWidth: 3,
+            filter: 'url(#shadow)'
+          }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+    
+    {/* Stats Summary */}
+    <div className="mt-6 grid grid-cols-3 gap-4">
+      <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
+        <div className="text-lg font-bold text-blue-700">
+          {monthlyData.length > 0 ? Math.max(...monthlyData.map(item => item.admissions_count || 0)) : 0}
+        </div>
+        <div className="text-xs text-blue-600 uppercase tracking-wide">Peak Month</div>
+      </div>
+      <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
+        <div className="text-lg font-bold text-green-700">
+          {monthlyData.length > 0 ? Math.round(monthlyData.reduce((sum, item) => sum + (item.admissions_count || 0), 0) / monthlyData.length) : 0}
+        </div>
+        <div className="text-xs text-green-600 uppercase tracking-wide">Average</div>
+      </div>
+      <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
+        <div className="text-lg font-bold text-orange-700">{monthlyData.length}</div>
+        <div className="text-xs text-orange-600 uppercase tracking-wide">Months</div>
+      </div>
+    </div>
+  </div>
+</div>
         {/* Filters */}
         <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -743,72 +938,232 @@ const ReportsDashboard = () => {
         </div>
 
         {/* Participants Table */}
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="p-6 border-b">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Recent Participants</h3>
-              <div className="flex gap-2">
-                <button 
-                  onClick={generateSimplePDF}
-                  className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                >
-                  <FileDown className="w-4 h-4" />
-                  PDF
-                </button>
-                <button 
-                  onClick={generatePDF}
-                  className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  CSV
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Age</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Condition</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admission</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {participants.map((participant) => (
-                  <tr key={participant.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">
-                        {participant.first_name} {participant.last_name}
+       {/* Participants Table */}
+<div className="bg-white rounded-lg shadow-sm">
+  <div className="p-6 border-b">
+    <div className="flex items-center justify-between">
+      <h3 className="text-lg font-semibold">Recent Participants</h3>
+      <div className="flex gap-2">
+        <button 
+          onClick={generateSimplePDF}
+          className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+        >
+          <FileDown className="w-4 h-4" />
+          PDF
+        </button>
+        <button 
+          onClick={generatePDF}
+          className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          CSV
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  {participants.length === 0 ? (
+    <div className="flex flex-col items-center justify-center py-16 px-6">
+      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+        <Users className="w-12 h-12 text-gray-400" />
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">No Participants Found</h3>
+      <p className="text-gray-500 text-center mb-6 max-w-md">
+        {Object.values(filters).some(filter => filter !== '') 
+          ? "No participants match your current filter criteria. Try adjusting your filters or clearing them to see all participants."
+          : "There are currently no participants in the system. Participants will appear here once they are added to the program."
+        }
+      </p>
+      {Object.values(filters).some(filter => filter !== '') && (
+        <button
+          onClick={() => {
+            setFilters({
+              status: '',
+              condition: '',
+              dateFrom: '',
+              dateTo: '',
+              admissionDateFrom: '',
+              admissionDateTo: ''
+            });
+            setDateRangeStats(null);
+            fetchReportsData();
+          }}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <Filter className="w-4 h-4" />
+          Clear All Filters
+        </button>
+      )}
+    </div>
+  ) : (
+    <div className="overflow-x-auto">
+      <div className="inline-block min-w-full align-middle">
+        <div className="overflow-hidden shadow-sm ring-1 ring-black ring-opacity-5 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gradient-to-r from-blue-700 to-blue-800">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Participant
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Age
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Condition
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4" />
+                    Status
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Admission Date
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                  Days in Program
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {participants.map((participant, index) => {
+                const daysInProgram = Math.floor((new Date() - new Date(participant.admission_date)) / (1000 * 60 * 60 * 24));
+                const isEvenRow = index % 2 === 0;
+                
+                return (
+                  <tr 
+                    key={participant.id} 
+                    className={`${isEvenRow ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5`}
+                  >
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-12 w-12">
+                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                            {participant.first_name?.[0]}{participant.last_name?.[0]}
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-bold text-gray-900">
+                            {participant.first_name} {participant.last_name}
+                          </div>
+                          <div className="text-sm text-gray-500 capitalize">
+                            {participant.gender || 'Not specified'}
+                          </div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {participant.age}
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="text-sm font-semibold text-gray-900 bg-gray-100 px-3 py-1 rounded-full">
+                          {participant.age} years
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {participant.condition}
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 font-medium bg-blue-50 px-3 py-2 rounded-lg border-l-4 border-blue-600">
+                        {participant.condition}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        participant.status === 'Active' ? 'bg-green-100 text-green-800' :
-                        participant.status === 'Discharged' ? 'bg-blue-100 text-blue-800' :
-                        participant.status === 'Transferred' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${
+                        participant.status === 'Active' 
+                          ? 'bg-green-100 text-green-800 ring-2 ring-green-200' :
+                        participant.status === 'Discharged' 
+                          ? 'bg-blue-100 text-blue-800 ring-2 ring-blue-200' :
+                        participant.status === 'Transferred' 
+                          ? 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-200' :
+                        'bg-gray-100 text-gray-800 ring-2 ring-gray-200'
                       }`}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${
+                          participant.status === 'Active' ? 'bg-green-400' :
+                          participant.status === 'Discharged' ? 'bg-blue-400' :
+                          participant.status === 'Transferred' ? 'bg-yellow-400' :
+                          'bg-gray-400'
+                        }`}></div>
                         {participant.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(participant.admission_date).toLocaleDateString()}
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 font-medium">
+                        {new Date(participant.admission_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(participant.admission_date).toLocaleDateString('en-US', { weekday: 'long' })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="text-sm font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                          {daysInProgram} {daysInProgram === 1 ? 'day' : 'days'}
+                        </div>
+                        {daysInProgram > 30 && (
+                          <div className="ml-2 text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full font-medium">
+                            Long-term
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      {/* Table Summary Footer */}
+      <div className="mt-4 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 rounded-lg border">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+              <span className="text-gray-600">
+                Active: <span className="font-semibold text-green-700">
+                  {participants.filter(p => p.status === 'Active').length}
+                </span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+              <span className="text-gray-600">
+                Discharged: <span className="font-semibold text-blue-700">
+                  {participants.filter(p => p.status === 'Discharged').length}
+                </span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+              <span className="text-gray-600">
+                Transferred: <span className="font-semibold text-yellow-700">
+                  {participants.filter(p => p.status === 'Transferred').length}
+                </span>
+              </span>
+            </div>
+          </div>
+          <div className="text-gray-600">
+            <span className="font-semibold text-gray-900">{participants.length}</span> total participants
           </div>
         </div>
+      </div>
+    </div>
+  )}
+</div>
       </div>
     </div>
   );

@@ -39,6 +39,16 @@ const AppContent = () => {
   const isLoggedIn = Boolean(user); // Check if the user is logged in
   const userRole = user?.role || ''; // Get the user's role
 
+  // Helper function to check if user should see navbar (participants and counselors)
+  const shouldShowNavbar = () => {
+    return userRole === 'participant' || userRole === 'counselor' || userRole.includes('participant') || userRole.includes('counselor');
+  };
+
+  // Helper function to check if user should see sidebar (non-participants, non-counselors)
+  const shouldShowSidebar = () => {
+    return userRole !== 'participant' && userRole !== 'counselor' && !userRole.includes('participant') && !userRole.includes('counselor');
+  };
+
   // Hilariously mocking messages for sneaky unauthenticated users
   const getHumorousMessage = () => {
     const messages = [
@@ -115,11 +125,11 @@ const AppContent = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Render Navbar for participants */}
-      {isLoggedIn && userRole === 'participant' && location.pathname !== '/login' && <Navbar />}
-      
-      {/* Render Sidebar only for non-participant roles */}
-      {isLoggedIn && userRole !== 'participant' && location.pathname !== '/login' && (
+      {/* Render Navbar for participants and counselors */}
+      {isLoggedIn && shouldShowNavbar() && location.pathname !== '/login' && <Navbar />}
+
+      {/* Render Sidebar only for non-participant and non-counselor roles (admin, professional, etc.) */}
+      {isLoggedIn && shouldShowSidebar() && location.pathname !== '/login' && (
         <div className="flex">
           <Sidebar />
           <div className="ml-64 flex-1 p-5">
@@ -147,15 +157,19 @@ const AppContent = () => {
         </div>
       )}
 
-      {/* Render content for participants */}
-      {isLoggedIn && userRole === 'participant' && location.pathname !== '/login' && (
+      {/* Render content for participants and counselors */}
+      {isLoggedIn && shouldShowNavbar() && location.pathname !== '/login' && (
         <div className="flex-1 p-5 mt-16"> {/* Add margin-top to push content below Navbar */}
           <Routes>
             <Route path="/participant/programs" element={<ParticipantPage />} />
+            <Route path="/counselor/programs" element={<ParticipantPage />} />
+
             <Route path="/home" element={<Home />} />
             <Route path="/help" element={<GuardianHelpRequests />} />
             <Route path="/chats" element={<ParticipantChatPage />} />
             <Route path="/yourparticipants" element={<GuardianParticipants />} />
+           <Route path="/counselor/yourparticipants" element={<GuardianParticipants />} />
+
           </Routes>
         </div>
       )}

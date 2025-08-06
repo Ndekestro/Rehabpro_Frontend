@@ -92,18 +92,17 @@ const Login = () => {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      if (user.role === 'participant') {
-        navigate('/home');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(err.message || 'An error occurred during login. Please try again.');
+     if (user.role === 'participant' || user.role === 'counselor') {
+  navigate('/home');
+} else {
+  navigate('/dashboard');
+}
+    } catch (error) {
+      setError(error.message);
     } finally {
       setIsLoading(false);
-    }
-  };
+    } 
+}
 
   const userRoles = [
     { 
@@ -122,6 +121,12 @@ const Login = () => {
       id: 'guardian', 
       name: 'Guardian', 
       description: 'Family members and caregivers',
+      icon: <Heart className="w-6 h-6" />
+    },
+    { 
+      id: 'counselor', 
+      name: 'Counselor', 
+      description: 'Counselors and support staff',
       icon: <Heart className="w-6 h-6" />
     }
   ];
@@ -236,12 +241,12 @@ const Login = () => {
               </div>
             )}
 
-            {/* User Role Selection */}
-            <div className="grid grid-cols-3 gap-2 mb-6">
+           {/* User Role Selection - Updated to 2x2 grid */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
               {userRoles.map(role => (
                 <div key={role.id} className="h-full">
                   <div 
-                    className={`h-full py-3 px-2 border-2 rounded-xl flex flex-col items-center text-center cursor-pointer transition-all ${
+                    className={`h-full py-4 px-3 border-2 rounded-xl flex flex-col items-center text-center cursor-pointer transition-all ${
                       selectedRole === role.id 
                         ? 'border-blue-600 bg-blue-50 shadow-lg' 
                         : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:shadow'
@@ -253,9 +258,10 @@ const Login = () => {
                     }`}>
                       {role.icon}
                     </div>
-                    <h3 className="font-medium text-sm">{role.name}</h3>
+                    <h3 className="font-medium text-sm mb-1">{role.name}</h3>
+                    <p className="text-xs text-gray-500 mb-2">{role.description}</p>
                     {selectedRole === role.id && (
-                      <div className="mt-1 text-blue-600">
+                      <div className="text-blue-600">
                         <CheckCircle className="w-4 h-4" />
                       </div>
                     )}

@@ -20,6 +20,7 @@ const RehabManagement = () => {
     national_id: '',
     condition: '',
     guardian_id: '',
+    counselor_id: '',
     professional_id: '',
     admission_date: '',
     status: 'Active',
@@ -31,6 +32,7 @@ const RehabManagement = () => {
   const [professionals, setProfessionals] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
+  const [counselors, setCounselors] = useState([]);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,6 +40,7 @@ const RehabManagement = () => {
     fetchParticipants();
     fetchGuardians();
     fetchProfessionals();
+     fetchCounselors();
   }, []);
 
   // ✅ Fetch all rehabilitation participants
@@ -62,7 +65,15 @@ const RehabManagement = () => {
       console.error('Error fetching guardians:', err);
     }
   };
-
+const fetchCounselors = async () => {
+  try {
+    const response = await fetch(`${API.baseUrl}/rehab/counselors`);
+    const data = await response.json();
+    setCounselors(data.counselors || []);
+  } catch (err) {
+    console.error('Error fetching counselors:', err);
+  }
+};
   // ✅ Fetch all available professionals
   const fetchProfessionals = async () => {
     try {
@@ -90,6 +101,7 @@ const RehabManagement = () => {
       national_id: '',
       condition: '',
       guardian_id: '',
+      counselor_id: '',
       professional_id: '',
       admission_date: '',
       status: 'Active',
@@ -155,6 +167,7 @@ const RehabManagement = () => {
       national_id: form.national_id || '',
       condition: form.condition || '',
       guardian_id: form.guardian_id || '',
+      counselor_id: form.counselor_id || '',
       professional_id: form.professional_id || '',
       admission_date: form.admission_date || '',
       status: form.status || 'Active',
@@ -302,6 +315,7 @@ default:
             national_id: localForm.national_id || null,
             condition: localForm.condition,
             guardian_id: localForm.guardian_id,
+            counselor_id: localForm.counselor_id || null,
             professional_id: localForm.professional_id,
             admission_date: localForm.admission_date,
             status: localForm.status,
@@ -458,6 +472,20 @@ default:
                   ))}
                 </select>
               </div>
+              <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Counselor (Optional)</label>
+  <select
+    name="counselor_id"
+    value={localForm.counselor_id}
+    onChange={handleLocalChange}
+    className={getInputClassName('counselor_id')}
+  >
+    <option value="">Select Counselor (Optional)</option>
+    {counselors.map((c) => (
+      <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>
+    ))}
+  </select>
+</div>
   
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Professional *</label>
@@ -760,7 +788,8 @@ default:
               />
               <DetailRow icon={Calendar} label="Age" value={participant.age} />
               <DetailRow icon={Heart} label="Condition" value={participant.condition} />
-              <DetailRow icon={Users} label="Guardian" value={participant.guardian_name} />
+              <DetailRow icon={Users} label="Guardian" value={participant.guardian_first_name + ' ' + participant.guardian_last_name} />
+              <DetailRow icon={Users} label="Counselor" value={participant.counselor_first_name + ' ' + participant.counselor_last_name || 'Not assigned'} />
               <DetailRow icon={Activity} label="Professional" value={participant.professional_name} />
               
               {/* Notes Section */}
@@ -862,8 +891,9 @@ default:
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">Guardian: {participant.guardian_first_name || 'None'}</div>
-                        <div className="text-sm text-gray-500">Professional: {participant.professional_first_name || 'None'}</div>
+                        <div className="text-sm text-gray-900">Guardian: {participant.guardian_first_name || 'None'} {participant.guardian_last_name || 'None'}</div>
+                        <div className="text-sm text-gray-500">Counselor: {participant.counselor_first_name || 'None'} {participant.counselor_last_name || 'None'}</div>
+                        <div className="text-sm text-gray-500">Professional: {participant.professional_first_name || 'None' } {participant.professional_last_name || 'None'}</div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(participant.status)}`}>

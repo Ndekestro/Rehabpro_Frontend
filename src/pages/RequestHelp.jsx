@@ -21,7 +21,7 @@ const GuardianHelpRequests = () => {
 
   const fetchParticipants = async () => {
     try {
-      const response = await fetch(`${API.baseUrl}/rehab/guardians/${guardianId}/participants`);
+      const response = await fetch(`${API.baseUrl}/rehab/guardian/${guardianId}/participants`);
       const data = await response.json();
       setParticipants(data.participants || []);
     } catch (err) {

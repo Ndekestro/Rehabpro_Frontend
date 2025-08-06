@@ -410,6 +410,7 @@ console.log('Form data:', updatedForm);
                 >
                   <option value="participant">Guardian</option>
                   <option value="professional">Professional</option>
+                  <option value="counselor">Counselor</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>

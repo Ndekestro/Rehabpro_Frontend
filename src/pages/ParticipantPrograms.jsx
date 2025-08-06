@@ -26,15 +26,21 @@ const ParticipantPage = () => {
 
   useEffect(() => {
     const fetchPrograms = async () => {
-      setIsLoading(true);
-      try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || user.role !== 'participant') {
-          setSnackbar({ open: true, message: 'Unauthorized access. Please log in as a participant.', severity: 'error' });
-          setIsLoading(false);
-          return;
-        }
-
+  setIsLoading(true);
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    // Allow access for both 'participant' and 'counselor' roles
+    if (!user || !['participant', 'counselor'].includes(user.role)) {
+      setSnackbar({ 
+        open: true, 
+        message: 'Unauthorized access. Please log in as a Guardian or counselor.', 
+        severity: 'error' 
+      });
+      setIsLoading(false);
+      return;
+    }
+    
         try {
           const response = await fetch(`${API.baseUrl}/programs/role?role=participant&userId=${user.id}`);
           
@@ -394,10 +400,10 @@ const ParticipantPage = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bold text-white">
-                    My Learning Programs
+                    My  Programs
                   </h2>
                   <p className="text-blue-100 mt-1">
-                    Continue your journey through interactive chapters
+                    Answer Questions on Participants we have enrolled in programs
                   </p>
                 </div>
               </div>

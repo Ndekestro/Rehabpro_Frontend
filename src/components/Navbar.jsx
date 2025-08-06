@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, BookOpen, HelpCircle, Menu, X, User, Bell, Settings } from 'lucide-react';
+import { LogOut, Home, BookOpen, HelpCircle, Menu, X, User, Bell, Settings, Users, FileText, Calendar, BarChart3 } from 'lucide-react';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -9,7 +9,8 @@ const Navbar = () => {
   const location = useLocation();
   
   // Get user data from localStorage (if available)
-  const userData = JSON.parse(localStorage.getItem('user') || '{"name": "Guest", "avatar": null}');
+  const userData = JSON.parse(localStorage.getItem('user') || '{"name": "Guest", "avatar": null, "role": "participant"}');
+  const userRole = userData.role || 'participant';
 
   // Handle scroll effect with enhanced threshold
   useEffect(() => {
@@ -114,37 +115,71 @@ const Navbar = () => {
 
             {/* Desktop Navigation with enhanced styling */}
             <div className="hidden md:flex items-center gap-2">
-              <Link 
-                to="/participant/programs" 
-                className={navLinkClass('/participant/programs')}
-              >
-                <BookOpen className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
-                <span>My Programs</span>
-                {isActivePath('/participant/programs') && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
-                )}
-              </Link>
+              {userRole === 'participant' && (
+                <>
+            
+                  <Link 
+                    to="/help" 
+                    className={navLinkClass('/help')}
+                  >
+                    <HelpCircle className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                    <span>Request Help</span>
+                    {isActivePath('/help') && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
+                    )}
+                  </Link>
 
-              <Link 
-                to="/help" 
-                className={navLinkClass('/help')}
-              >
-                <HelpCircle className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-                <span>Request Help</span>
-                {isActivePath('/help') && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
-                )}
-              </Link>
-<Link 
-                to="/yourparticipants" 
-                className={navLinkClass('/help')}
-              >
-                <HelpCircle className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-                <span>Your Participant/Member</span>
-                {isActivePath('/help') && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
-                )}
-              </Link>
+                  <Link 
+                    to="/yourparticipants" 
+                    className={navLinkClass('/yourparticipants')}
+                  >
+                    <HelpCircle className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                    <span>Your Participant/Member</span>
+                    {isActivePath('/yourparticipants') && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
+                    )}
+                  </Link>
+                </>
+              )}
+
+              {userRole === 'counselor' && (
+                <>
+                 
+
+                  <Link 
+                    to="/counselor/yourparticipants" 
+                    className={navLinkClass('/counselor/yourparticipants')}
+                  >
+                    <Users className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
+                    <span>All Participants</span>
+                    {isActivePath('/counselor/participants') && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
+                    )}
+                  </Link>
+
+                  <Link 
+                    to="/counselor/programs" 
+                    className={navLinkClass('/counselor/programs')}
+                  >
+                    <BookOpen className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
+                    <span>Programs</span>
+                    {isActivePath('/counselor/programs') && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
+                    )}
+                  </Link>
+
+                  <Link 
+                    to="/help" 
+                    className={navLinkClass('/help')}
+                  >
+                    <HelpCircle className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
+                    <span>Support</span>
+                    {isActivePath('/help') && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl animate-pulse" />
+                    )}
+                  </Link>
+                </>
+              )}
              
               {/* Enhanced User Profile */}
               <div className="flex items-center ml-4">
@@ -165,7 +200,7 @@ const Navbar = () => {
                   )}
                   <div className="text-left">
                     <div className="text-white text-sm font-semibold">{userData.name}</div>
-                    <div className="text-blue-100/80 text-xs">Guardian</div>
+                    <div className="text-blue-100/80 text-xs">{userRole === 'counselor' ? 'Counselor' : 'Participant'}</div>
                   </div>
                 </div>
               </div>
@@ -244,58 +279,97 @@ const Navbar = () => {
               )}
               <div>
                 <div className="text-white font-bold text-lg">{userData.name}</div>
-                <div className="text-blue-200 text-sm">Participant</div>
+                <div className="text-blue-200 text-sm">{userRole === 'counselor' ? 'Counselor' : 'Participant'}</div>
               </div>
             </div>
           
-            <Link
-              to="/participant/programs"
-              className="
-                flex items-center gap-4 px-4 py-4 rounded-xl
-                text-white bg-gradient-to-r from-transparent to-transparent
-                hover:from-white/10 hover:to-white/5 backdrop-blur-sm
-                transition-all duration-300 border border-transparent hover:border-white/20
-                transform hover:translate-x-2 hover:shadow-lg group
-              "
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <BookOpen className="h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
-              <span className="font-semibold">My Programs</span>
-            </Link>
+            {userRole === 'participant' && (
+              <>
+                
 
-            <Link
-              to="/help"
-              className="
-                flex items-center gap-4 px-4 py-4 rounded-xl
-                text-white bg-gradient-to-r from-transparent to-transparent
-                hover:from-white/10 hover:to-white/5 backdrop-blur-sm
-                transition-all duration-300 border border-transparent hover:border-white/20
-                transform hover:translate-x-2 hover:shadow-lg group
-              "
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <HelpCircle className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
-              <span className="font-semibold">Request Help</span>
-            </Link>
+                <Link
+                  to="/help"
+                  className="
+                    flex items-center gap-4 px-4 py-4 rounded-xl
+                    text-white bg-gradient-to-r from-transparent to-transparent
+                    hover:from-white/10 hover:to-white/5 backdrop-blur-sm
+                    transition-all duration-300 border border-transparent hover:border-white/20
+                    transform hover:translate-x-2 hover:shadow-lg group
+                  "
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <HelpCircle className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
+                  <span className="font-semibold">Request Help</span>
+                </Link>
 
-             <Link
-              to="/yourparticipants"
-              className="
-                flex items-center gap-4 px-4 py-4 rounded-xl
-                text-white bg-gradient-to-r from-transparent to-transparent
-                hover:from-white/10 hover:to-white/5 backdrop-blur-sm
-                transition-all duration-300 border border-transparent hover:border-white/20
-                transform hover:translate-x-2 hover:shadow-lg group
-              "
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <HelpCircle className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
-              <span className="font-semibold">Your Participant/Member</span>
-            </Link>
+                 <Link
+                  to="/yourparticipants"
+                  className="
+                    flex items-center gap-4 px-4 py-4 rounded-xl
+                    text-white bg-gradient-to-r from-transparent to-transparent
+                    hover:from-white/10 hover:to-white/5 backdrop-blur-sm
+                    transition-all duration-300 border border-transparent hover:border-white/20
+                    transform hover:translate-x-2 hover:shadow-lg group
+                  "
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <HelpCircle className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
+                  <span className="font-semibold">Your Participant/Member</span>
+                </Link>
+              </>
+            )}
+
+            {userRole === 'counselor' && (
+              <>
+                
+                <Link
+                  to="/counselor/yourparticipants"
+                  className="
+                    flex items-center gap-4 px-4 py-4 rounded-xl
+                    text-white bg-gradient-to-r from-transparent to-transparent
+                    hover:from-white/10 hover:to-white/5 backdrop-blur-sm
+                    transition-all duration-300 border border-transparent hover:border-white/20
+                    transform hover:translate-x-2 hover:shadow-lg group
+                  "
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Users className="h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
+                  <span className="font-semibold">All Participants</span>
+                </Link>
+
+                <Link
+                  to="/counselors/programs"
+                  className="
+                    flex items-center gap-4 px-4 py-4 rounded-xl
+                    text-white bg-gradient-to-r from-transparent to-transparent
+                    hover:from-white/10 hover:to-white/5 backdrop-blur-sm
+                    transition-all duration-300 border border-transparent hover:border-white/20
+                    transform hover:translate-x-2 hover:shadow-lg group
+                  "
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <BookOpen className="h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
+                  <span className="font-semibold">Programs</span>
+                </Link>
+
+               
+                <Link
+                  to="/help"
+                  className="
+                    flex items-center gap-4 px-4 py-4 rounded-xl
+                    text-white bg-gradient-to-r from-transparent to-transparent
+                    hover:from-white/10 hover:to-white/5 backdrop-blur-sm
+                    transition-all duration-300 border border-transparent hover:border-white/20
+                    transform hover:translate-x-2 hover:shadow-lg group
+                  "
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <HelpCircle className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
+                  <span className="font-semibold">Support</span>
+                </Link>
+              </>
+            )}
             
-            
-           
-
             <div className="pt-4 border-t border-white/20 mt-4"></div>
 
             <button

@@ -1,174 +1,130 @@
 import React, { useEffect, useState } from 'react';
 import API from '../api';
 import { 
-  BookOpen, Users, Award, User, Check, X, ArrowRight, 
-  AlertTriangle, ChevronRight, UserPlus, UserMinus, Briefcase,
-  CheckCircle
+  BookOpen, Users, Award, User, UserPlus, UserMinus, Briefcase,
+  CheckCircle, AlertTriangle, ChevronRight, Shield, UserCheck
 } from 'lucide-react';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
 
 const ProfessionalPage = () => {
   const [programs, setPrograms] = useState([]);
   const [selectedProgram, setSelectedProgram] = useState(null);
-  const [progress, setProgress] = useState({});
-  const [remarks, setRemarks] = useState({});
   const [participants, setParticipants] = useState([]);
   const [participantDetails, setParticipantDetails] = useState({});
-  const [availableParticipants, setAvailableParticipants] = useState([]);
+  const [availableUsers, setAvailableUsers] = useState([]);
   const [newParticipantId, setNewParticipantId] = useState('');
-  const [chapters, setChapters] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'info'
-  });
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'info' });
+
+  const showNotification = (message, type = 'info') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: '', type: 'info' }), 4000);
+  };
+
+  const getRoleIcon = (role) => {
+    switch (role) {
+      case 'participant': return <User className="h-4 w-4" />;
+      case 'counselor': return <Shield className="h-4 w-4" />;
+      case 'professional': return <UserCheck className="h-4 w-4" />;
+      default: return <User className="h-4 w-4" />;
+    }
+  };
+
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'participant': return 'bg-blue-100 text-blue-700';
+      case 'counselor': return 'bg-green-100 text-green-700';
+      case 'professional': return 'bg-purple-100 text-purple-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
 
   useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || user.role !== 'professional') {
-          setError('Unauthorized access. Please log in as a professional.');
-          setSnackbar({
-            open: true,
-            message: 'Unauthorized access. Please log in as a professional.',
-            severity: 'error'
-          });
-          setIsLoading(false);
-          return;
-        }
-
-        try {
-          const response = await fetch(`${API.baseUrl}/programs/role?role=professional&userId=${user.id}`);
-          
-          if (!response.ok) {
-            if (response.status === 500) {
-              console.log('No programs found or server error.');
-              setPrograms([]);
-              setSnackbar({
-                open: true,
-                message: 'You are not currently assigned to any programs.',
-                severity: 'info'
-              });
-            } else {
-              throw new Error(`Error ${response.status}: ${response.statusText}`);
-            }
-          } else {
-            const data = await response.json();
-            setPrograms(Array.isArray(data) ? data : []);
-          }
-        } catch (error) {
-          console.error('Error fetching assigned programs:', error);
-          setError('Unable to fetch programs. You may not have any programs assigned yet.');
-          setSnackbar({
-            open: true,
-            message: 'Error fetching programs. You may not have any programs assigned yet.',
-            severity: 'warning'
-          });
-          setPrograms([]);
-        }
-      } catch (error) {
-        console.error('Error in user authentication:', error);
-        setError('Authentication error. Please log in again.');
-        setSnackbar({
-          open: true,
-          message: 'Authentication error. Please log in again.',
-          severity: 'error'
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchPrograms();
   }, []);
+
+  const fetchPrograms = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!user.id || user.role !== 'professional') {
+        setError('Unauthorized access. Please log in as a professional.');
+        showNotification('Unauthorized access. Please log in as a professional.', 'error');
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API.baseUrl}/programs/role?role=professional&userId=${user.id}`);
+      
+      if (!response.ok) {
+        if (response.status === 500) {
+          setPrograms([]);
+          showNotification('You are not currently assigned to any programs.', 'info');
+        } else {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+      } else {
+        const data = await response.json();
+        setPrograms(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error('Error fetching programs:', error);
+      setError('Unable to fetch programs. You may not have any programs assigned yet.');
+      showNotification('Error fetching programs. Please try again later.', 'error');
+      setPrograms([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      // Fetch all users from the correct endpoint
+      const response = await fetch(`${API.baseUrl}/programs/participants`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const allUsers = await response.json();
+      
+      // Create details map for all users
+      const detailsMap = {};
+      allUsers.forEach(user => {
+        detailsMap[user.id] = user;
+      });
+      setParticipantDetails(detailsMap);
+      
+      // Filter available users by role (participants and counselors only)
+      // Exclude users already in the current program
+      const currentParticipantIds = participants.map(id => id.toString());
+      const availableUsers = allUsers.filter(user => 
+        (user.role === 'participant' || user.role === 'counselor') &&
+        !currentParticipantIds.includes(user.id.toString())
+      );
+      
+      setAvailableUsers(availableUsers);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      showNotification('Could not load available users.', 'warning');
+      setAvailableUsers([]);
+    }
+  };
 
   const handleSelectProgram = async (program) => {
     try {
       setSelectedProgram(program);
-      setProgress({});
-      setRemarks({});
       setIsLoading(true);
       setError(null);
       
-      // Get participant IDs from the program
       const participantIds = program.participants ? 
         (typeof program.participants === 'string' ? program.participants.split(',') : program.participants) 
         : [];
       
       setParticipants(participantIds);
-
-      try {
-        // Fetch chapters for the program
-        const chaptersResponse = await fetch(`${API.baseUrl}/chapters?programId=${program.id}`);
-        
-        if (!chaptersResponse.ok) {
-          console.log('No chapters found or error fetching chapters.');
-          setChapters([]);
-        } else {
-          const chaptersData = await chaptersResponse.json();
-          setChapters(Array.isArray(chaptersData) ? chaptersData : []);
-
-          const initialProgress = {};
-          const initialRemarks = {};
-          chaptersData.forEach((chapter) => {
-            initialProgress[chapter.id] = chapter.progress || '';
-            initialRemarks[chapter.id] = chapter.remarks || '';
-          });
-          setProgress(initialProgress);
-          setRemarks(initialRemarks);
-        }
-
-        // Fetch all available participants
-        const participantsResponse = await fetch(`${API.baseUrl}/programs/participants`);
-        
-        if (!participantsResponse.ok) {
-          console.log('Error fetching available participants.');
-          setAvailableParticipants([]);
-          setSnackbar({
-            open: true,
-            message: 'Could not load available guardians.',
-            severity: 'warning'
-          });
-        } else {
-          const availableParticipantsData = await participantsResponse.json();
-          
-          // Create a map of participant details for easy lookup
-          const detailsMap = {};
-          availableParticipantsData.forEach(participant => {
-            detailsMap[participant.id] = participant;
-          });
-          setParticipantDetails(detailsMap);
-          
-          // Filter out already assigned participants
-          const currentParticipantIds = participantIds.map(id => id.toString());
-          const filteredParticipants = availableParticipantsData.filter(participant => 
-            !currentParticipantIds.includes(participant.id.toString())
-          );
-          
-          setAvailableParticipants(filteredParticipants);
-        }
-      } catch (error) {
-        console.error('Error fetching program details:', error);
-        setError('Unable to load program details. Please try again later.');
-        setSnackbar({
-          open: true,
-          message: 'Unable to load program details. Please try again later.',
-          severity: 'error'
-        });
-      }
+      await fetchAllUsers();
     } catch (error) {
-      console.error('Error in program selection:', error);
+      console.error('Error selecting program:', error);
       setError('An unexpected error occurred. Please try again.');
-      setSnackbar({
-        open: true,
-        message: 'An unexpected error occurred. Please try again.',
-        severity: 'error'
-      });
+      showNotification('An unexpected error occurred. Please try again.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -177,23 +133,16 @@ const ProfessionalPage = () => {
   const handleAddParticipant = async (e) => {
     e.preventDefault();
     if (!newParticipantId) {
-      setSnackbar({
-        open: true,
-        message: 'Please select a guardian to add',
-        severity: 'warning'
-      });
+      showNotification('Please select a user to add', 'warning');
       return;
     }
 
     setIsSubmitting(true);
-    setError(null);
     
     try {
       const response = await fetch(`${API.baseUrl}/programs/addparticipant`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           programId: selectedProgram.id,
           userId: newParticipantId,
@@ -201,74 +150,25 @@ const ProfessionalPage = () => {
       });
 
       if (response.ok) {
-        // Find the guardian details to display in the success message
-        const addedGuardian = availableParticipants.find(p => p.id.toString() === newParticipantId);
-        const guardianName = addedGuardian ? 
-          `${addedGuardian.first_name || ''} ${addedGuardian.last_name || ''}`.trim() : 
-          'Guardian';
+        const addedUser = availableUsers.find(p => p.id.toString() === newParticipantId);
+        const userName = addedUser ? 
+          `${addedUser.first_name || ''} ${addedUser.last_name || ''}`.trim() : 
+          'User';
 
-        setSnackbar({
-          open: true,
-          message: `${guardianName} successfully added to the program`,
-          severity: 'success'
-        });
-
-        try {
-          const updatedProgram = await fetch(`${API.baseUrl}/programs/${selectedProgram.id}`);
-          
-          if (updatedProgram.ok) {
-            const updatedData = await updatedProgram.json();
-            const updatedParticipantIds = updatedData.participants ? 
-              (typeof updatedData.participants === 'string' ? updatedData.participants.split(',') : updatedData.participants) 
-              : [];
-            
-            setParticipants(updatedParticipantIds);
-            
-            // Remove the added participant from available participants
-            setAvailableParticipants(prev => 
-              prev.filter(p => p.id.toString() !== newParticipantId)
-            );
-            
-            setNewParticipantId('');
-          } else {
-            console.error('Error fetching updated program data');
-            setSnackbar({
-              open: true,
-              message: 'Guardian was added but unable to refresh the list. Please reload the page.',
-              severity: 'warning'
-            });
-          }
-        } catch (error) {
-          console.error('Error refreshing program data:', error);
-          setSnackbar({
-            open: true,
-            message: 'Guardian was added but unable to refresh the list. Please reload the page.',
-            severity: 'warning'
-          });
-        }
+        showNotification(`${userName} successfully added to the program`, 'success');
+        
+        // Update participants list
+        setParticipants(prev => [...prev, newParticipantId]);
+        // Remove from available users
+        setAvailableUsers(prev => prev.filter(p => p.id.toString() !== newParticipantId));
+        setNewParticipantId('');
       } else {
-        try {
-          const errorData = await response.json();
-          setSnackbar({
-            open: true,
-            message: errorData.error || 'Error adding guardian. Please try again.',
-            severity: 'error'
-          });
-        } catch (error) {
-          setSnackbar({
-            open: true,
-            message: 'Error adding guardian. Please try again.',
-            severity: 'error'
-          });
-        }
+        const errorData = await response.json().catch(() => ({}));
+        showNotification(errorData.error || 'Error adding user. Please try again.', 'error');
       }
     } catch (error) {
-      console.error('Error adding guardian:', error);
-      setSnackbar({
-        open: true,
-        message: 'Network error when adding guardian. Please check your connection and try again.',
-        severity: 'error'
-      });
+      console.error('Error adding participant:', error);
+      showNotification('Network error. Please check your connection and try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -276,20 +176,16 @@ const ProfessionalPage = () => {
 
   const handleRemoveParticipant = async (userId) => {
     setIsSubmitting(true);
-    setError(null);
     
-    // Get the guardian name before removing
-    const guardianDetails = participantDetails[userId];
-    const guardianName = guardianDetails ? 
-      `${guardianDetails.first_name || ''} ${guardianDetails.last_name || ''}`.trim() : 
-      'Guardian';
+    const userDetails = participantDetails[userId];
+    const userName = userDetails ? 
+      `${userDetails.first_name || ''} ${userDetails.last_name || ''}`.trim() : 
+      'User';
     
     try {
       const response = await fetch(`${API.baseUrl}/programs/removeparticipant`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           programId: selectedProgram.id,
           userId,
@@ -297,61 +193,21 @@ const ProfessionalPage = () => {
       });
 
       if (response.ok) {
-        // Remove the participant locally
         setParticipants(prev => prev.filter(participantId => participantId !== userId));
         
-        // Add the removed participant back to available participants
-        try {
-          if (participantDetails[userId]) {
-            setAvailableParticipants(prev => [...prev, participantDetails[userId]]);
-          } else {
-            const participantsResponse = await fetch(`${API.baseUrl}/programs/participants`);
-            if (participantsResponse.ok) {
-              const allParticipants = await participantsResponse.json();
-              const removedParticipant = allParticipants.find(p => p.id.toString() === userId.toString());
-              
-              if (removedParticipant) {
-                setAvailableParticipants(prev => [...prev, removedParticipant]);
-              }
-            }
-          }
-          
-          setSnackbar({
-            open: true,
-            message: `${guardianName} successfully removed from the program`,
-            severity: 'success'
-          });
-        } catch (error) {
-          console.error('Error refreshing available participants:', error);
-          setSnackbar({
-            open: true,
-            message: `${guardianName} was removed but the list may not be up to date. Please reload the page.`,
-            severity: 'warning'
-          });
+        // Add back to available users if they're participant or counselor
+        if (userDetails && (userDetails.role === 'participant' || userDetails.role === 'counselor')) {
+          setAvailableUsers(prev => [...prev, userDetails]);
         }
+        
+        showNotification(`${userName} successfully removed from the program`, 'success');
       } else {
-        try {
-          const errorData = await response.json();
-          setSnackbar({
-            open: true,
-            message: errorData.error || 'Error removing guardian. Please try again.',
-            severity: 'error'
-          });
-        } catch (error) {
-          setSnackbar({
-            open: true,
-            message: 'Error removing guardian. Please try again.',
-            severity: 'error'
-          });
-        }
+        const errorData = await response.json().catch(() => ({}));
+        showNotification(errorData.error || 'Error removing user. Please try again.', 'error');
       }
     } catch (error) {
       console.error('Error removing participant:', error);
-      setSnackbar({
-        open: true,
-        message: 'Network error when removing guardian. Please check your connection and try again.',
-        severity: 'error'
-      });
+      showNotification('Network error. Please check your connection and try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -359,14 +215,18 @@ const ProfessionalPage = () => {
 
   const getFullName = (participantId) => {
     const details = participantDetails[participantId];
-    if (!details) return `Guardian ${participantId}`;
-    
-    return `${details.first_name || ''} ${details.last_name || ''}`.trim() || `Guardian ${participantId}`;
+    if (!details) return `User ${participantId}`;
+    return `${details.first_name || ''} ${details.last_name || ''}`.trim() || `User ${participantId}`;
+  };
+
+  const getUserRole = (participantId) => {
+    const details = participantDetails[participantId];
+    return details?.role || 'unknown';
   };
 
   if (isLoading && !selectedProgram) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="bg-white p-8 rounded-xl shadow-lg text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-700 font-medium">Loading your programs...</p>
@@ -376,102 +236,84 @@ const ProfessionalPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-8 px-4 sm:px-6 lg:px-8 pb-16">
-      <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8 md:px-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between">
-              <div className="flex items-center space-x-4 mb-4 md:mb-0">
-                <div className="p-3 bg-white bg-opacity-20 rounded-full">
-                  <Briefcase className="h-8 w-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-white">
-                    Programs Survey Management
-                  </h2>
-                  <p className="text-blue-100 mt-1">
-                    Manage programs and guardians
-                  </p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gray-50 p-4">
+      {/* Notification */}
+      {notification.show && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+          notification.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+          notification.type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+          notification.type === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+          'bg-blue-100 text-blue-800 border border-blue-200'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm mb-6 p-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Briefcase className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Program Management</h1>
+              <p className="text-gray-600">Manage programs and participants</p>
             </div>
           </div>
           
           {error && (
-            <div className="px-6 py-4 bg-red-50 border-l-4 border-red-500 flex items-start">
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
               <AlertTriangle className="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
               <p className="text-red-700">{error}</p>
             </div>
           )}
         </div>
 
-        {/* Programs Grid */}
-        <div className="mb-10">
-          <div className="flex items-center space-x-3 mb-6">
-            <Award className="h-6 w-6 text-blue-600" />
-            <h3 className="text-xl font-semibold text-gray-800">
-              Your Assigned Programs
-            </h3>
-          </div>
+        {/* Programs */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Award className="h-5 w-5 mr-2 text-blue-600" />
+            Your Programs
+          </h2>
           
           {programs.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center">
-              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-                <AlertTriangle className="h-8 w-8 text-yellow-600" />
-              </div>
-              <h4 className="text-xl font-medium text-gray-900 mb-2">No Programs Assigned</h4>
-              <p className="text-gray-600 max-w-md mx-auto">
-                You currently don't have any programs assigned to you. 
-                Please contact an administrator if you believe this is an error.
-              </p>
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+              <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Programs Assigned</h3>
+              <p className="text-gray-600">Contact an administrator if you believe this is an error.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {programs.map((program) => (
                 <div
                   key={program.id}
                   onClick={() => handleSelectProgram(program)}
-                  className={`
-                    relative overflow-hidden rounded-xl p-6 cursor-pointer
-                    transition-all duration-300 ease-in-out
-                    ${
-                      selectedProgram?.id === program.id
-                        ? 'bg-blue-50 border-2 border-blue-500 shadow-lg transform scale-102'
-                        : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1'
-                    }
-                  `}
+                  className={`p-4 rounded-lg cursor-pointer transition-all ${
+                    selectedProgram?.id === program.id
+                      ? 'bg-blue-50 border-2 border-blue-500 shadow-md'
+                      : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                  }`}
                 >
-                  <div className="flex flex-col h-full">
-                    <div className="flex items-start mb-4">
-                      <div className="p-2 bg-blue-100 rounded-lg mr-4">
-                        <BookOpen className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <h4 className="text-lg font-semibold text-gray-900">
-                        {program.name}
-                      </h4>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <BookOpen className="h-5 w-5 text-blue-600" />
                     </div>
-                    
-                    <p className="text-gray-600 mb-4 flex-grow">
-                      {program.description}
-                    </p>
-                    
-                    <div className="space-y-2 mt-auto">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <User className="h-4 w-4 mr-2 text-gray-400" />
-                        <span>Created by: </span>
-                        <span className="ml-1 font-medium text-gray-700">{program.created_by_name}</span>
-                      </div>
-                      
-                      <div className="flex items-center text-sm text-gray-500">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-2
-                          ${program.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                        `}>
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          {program.status}
-                        </span>
-                        <ChevronRight className="h-4 w-4 ml-auto text-gray-400" />
-                      </div>
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                  </div>
+                  
+                  <h3 className="font-semibold text-gray-900 mb-2">{program.name}</h3>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{program.description}</p>
+                  
+                  <div className="space-y-1 text-xs text-gray-500">
+                    <p>Created by: <span className="font-medium">{program.created_by_name}</span></p>
+                    <div className="flex items-center">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                        ${program.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                      `}>
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        {program.status}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -480,164 +322,112 @@ const ProfessionalPage = () => {
           )}
         </div>
 
-        {/* Selected Program Section */}
+        {/* Selected Program Details */}
         {selectedProgram && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {isLoading ? (
-              <div className="bg-white rounded-xl shadow-md p-8 text-center">
+              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading program details...</p>
               </div>
             ) : (
               <>
-                {/* Add Guardian Section */}
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4">
-                    <h3 className="text-lg font-semibold text-white flex items-center">
-                      <UserPlus className="h-5 w-5 mr-2" />
-                      Add Guardian to {selectedProgram.name}
-                    </h3>
-                  </div>
+                {/* Add User Section */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <UserPlus className="h-5 w-5 mr-2 text-green-600" />
+                    Add User to {selectedProgram.name}
+                  </h3>
                   
-                  <div className="p-6">
-                    {availableParticipants.length === 0 ? (
-                      <div className="bg-gray-50 rounded-lg p-4 text-center">
-                        <p className="text-gray-600">No available guardians to add</p>
+                  {availableUsers.length === 0 ? (
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <p className="text-gray-600">No available users to add</p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleAddParticipant} className="flex gap-4">
+                      <div className="flex-1">
+                        <select
+                          value={newParticipantId}
+                          onChange={(e) => setNewParticipantId(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        >
+                          <option value="">Select a user to add</option>
+                          {availableUsers.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {`${user.first_name || ''} ${user.last_name || ''}`.trim() || `User ${user.id}`} 
+                              ({user.role})
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    ) : (
-                      <form onSubmit={handleAddParticipant} className="space-y-4">
-                        <div>
-                          <label htmlFor="guardian-select" className="block text-sm font-medium text-gray-700 mb-1">
-                            Select Guardian
-                          </label>
-                          <div className="relative">
-                            <select
-                              id="guardian-select"
-                              value={newParticipantId}
-                              onChange={(e) => setNewParticipantId(e.target.value)}
-                              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
-                              required
-                            >
-                              <option value="">Select a guardian to add</option>
-                              {availableParticipants.map((participant) => (
-                                <option key={participant.id} value={participant.id}>
-                                  {`${participant.first_name || ''} ${participant.last_name || ''}`.trim() || `Guardian ${participant.id}`}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex justify-end">
-                          <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className={`
-                              px-6 py-2 rounded-lg text-white font-medium
-                              transition-all duration-200 ease-in-out flex items-center
-                              ${
-                                isSubmitting
-                                  ? 'bg-gray-400 cursor-not-allowed'
-                                  : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-md'
-                              }
-                            `}
-                          >
-                            {isSubmitting ? (
-                              <>
-                                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-                                <span>Adding...</span>
-                              </>
-                            ) : (
-                              <>
-                                <UserPlus className="h-5 w-5 mr-2" />
-                                <span>Add Guardian</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </form>
-                    )}
-                  </div>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      >
+                        {isSubmitting ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                        ) : (
+                          <UserPlus className="h-4 w-4 mr-2" />
+                        )}
+                        Add
+                      </button>
+                    </form>
+                  )}
                 </div>
 
-                {/* Current Guardians List */}
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4">
-                    <h3 className="text-lg font-semibold text-white flex items-center">
-                      <Users className="h-5 w-5 mr-2" />
-                      Current Guardians for {selectedProgram.name}
-                    </h3>
-                  </div>
+                {/* Current Participants */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Users className="h-5 w-5 mr-2 text-blue-600" />
+                    Current Participants ({participants.length})
+                  </h3>
                   
-                  <div className="p-6">
-                    {participants.length > 0 ? (
-                      <div className="space-y-3">
-                        {participants.map((participantId) => (
+                  {participants.length > 0 ? (
+                    <div className="space-y-2">
+                      {participants.map((participantId) => {
+                        const role = getUserRole(participantId);
+                        return (
                           <div
                             key={participantId}
-                            className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                            className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                           >
-                            <div className="flex items-center">
-                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                                <User className="h-5 w-5 text-blue-600" />
+                            <div className="flex items-center space-x-3">
+                              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                {getRoleIcon(role)}
                               </div>
-                              <span className="font-medium text-gray-800">
-                                {getFullName(participantId)}
-                              </span>
+                              <div>
+                                <p className="font-medium text-gray-900">{getFullName(participantId)}</p>
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(role)}`}>
+                                  {role}
+                                </span>
+                              </div>
                             </div>
                             <button
                               onClick={() => handleRemoveParticipant(participantId)}
                               disabled={isSubmitting}
-                              className={`
-                                px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 border border-red-200
-                                transition-colors duration-200 flex items-center
-                                ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-700'}
-                              `}
+                              className="px-3 py-1 text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors disabled:opacity-50 flex items-center"
                             >
                               <UserMinus className="h-4 w-4 mr-1" />
                               Remove
                             </button>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 rounded-lg p-8 text-center">
-                        <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                          <Users className="h-8 w-8 text-blue-500" />
-                        </div>
-                        <h4 className="text-lg font-medium text-gray-800 mb-2">No Guardians Added</h4>
-                        <p className="text-gray-600 max-w-md mx-auto">
-                          There are currently no guardians added to this program.
-                          Use the form above to add guardians.
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-lg p-8 text-center">
+                      <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h4 className="text-lg font-medium text-gray-900 mb-2">No Participants</h4>
+                      <p className="text-gray-600">Add participants using the form above.</p>
+                    </div>
+                  )}
                 </div>
               </>
             )}
           </div>
         )}
-
-        {/* Snackbar for notifications */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </div>
     </div>
   );
