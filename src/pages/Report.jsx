@@ -186,7 +186,8 @@ const GuardianRow = ({ guardian }) => {
                   {guardian.participants.map((participant) => (
                     <tr key={participant.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {participant.first_name} {participant.last_name}
+                        {/* Handle both data structures */}
+                        {participant.first_name || participant.name || 'No Name'} {participant.last_name || ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {participant.age}
