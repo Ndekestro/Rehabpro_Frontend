@@ -42,6 +42,20 @@ const RehabManagement = () => {
     fetchProfessionals();
      fetchCounselors();
   }, []);
+  // Clear messages after 5 seconds
+useEffect(() => {
+  if (message) {
+    const timer = setTimeout(() => setMessage(''), 5000);
+    return () => clearTimeout(timer);
+  }
+}, [message]);
+
+useEffect(() => {
+  if (error) {
+    const timer = setTimeout(() => setError(''), 5000);
+    return () => clearTimeout(timer);
+  }
+}, [error]);
 
   // ✅ Fetch all rehabilitation participants
   const fetchParticipants = async () => {
@@ -157,8 +171,28 @@ const fetchCounselors = async () => {
   };
 
   const FormModal = () => {
-    // Local state for form input
-    const [localForm, setLocalForm] = useState({
+  // Initialize local form state with current form values
+  const [localForm, setLocalForm] = useState(() => ({
+    id: form.id || null,
+    first_name: form.first_name || '',
+    last_name: form.last_name || '',
+    gender: form.gender || 'Male',
+    age: form.age || '',
+    national_id: form.national_id || '',
+    condition: form.condition || '',
+    guardian_id: form.guardian_id || '',
+    counselor_id: form.counselor_id || '',
+    professional_id: form.professional_id || '',
+    admission_date: form.admission_date || '',
+    status: form.status || 'Active',
+    notes: form.notes || '', 
+    reason: form.reason || '', 
+    time_period: form.time_period || '' 
+  }));
+
+  // Update local form when form prop changes (for editing)
+  useEffect(() => {
+    setLocalForm({
       id: form.id || null,
       first_name: form.first_name || '',
       last_name: form.last_name || '',
@@ -175,460 +209,570 @@ const fetchCounselors = async () => {
       reason: form.reason || '', 
       time_period: form.time_period || '' 
     });
+  }, [form]);
+
+  // State for validation errors
+  const [errors, setErrors] = useState({});
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'first_name':
+        if (!value || !value.trim()) return 'First name is required';
+        if (value.trim().length < 2) return 'First name must be at least 2 characters';
+        if (!/^[a-zA-Z\s]*$/.test(value.trim())) return 'First name can only contain letters and spaces';
+        return '';
+
+      case 'last_name':
+        if (!value || !value.trim()) return 'Last name is required';
+        if (value.trim().length < 2) return 'Last name must be at least 2 characters';
+        if (!/^[a-zA-Z\s]*$/.test(value.trim())) return 'Last name can only contain letters and spaces';
+        return '';
+
+      case 'age':
+        if (!value) return 'Age is required';
+        const age = parseInt(value);
+        if (isNaN(age) || age < 0 || age > 120) return 'Please enter a valid age between 0 and 120';
+        return '';
+
+      case 'condition':
+        if (!value) return 'Condition is required';
+        return '';
+
+      case 'guardian_id':
+        if (!value) return 'Guardian is required';
+        return '';
+
+      case 'professional_id':
+        if (!value) return 'Professional is required';
+        return '';
+
+      case 'admission_date':
+        if (!value) return 'Admission date is required';
+        return '';
+
+      case 'reason':
+        if (!value || !value.trim()) return 'Reason for admission is required';
+        if (value.trim().length < 3) return 'Reason should be at least 3 characters';
+        return '';
+
+      case 'time_period':
+        if (!value || !value.trim()) return 'Expected time period is required';
+        return '';
+
+      case 'national_id':
+        if (value && value.length !== 16) return 'National ID must be exactly 16 characters';
+        if (value && !/^\d+$/.test(value)) return 'National ID must contain only numbers';
+        
+        if (value) {
+          // Extract birth year from positions 1-4 (0-indexed)
+          const birthYear = parseInt(value.substring(1, 5));
+          const currentYear = new Date().getFullYear();
+          const userAge = currentYear - birthYear;
+          
+          if (userAge < 16) return 'You must be at least 16 years old';
+        }
+        
+        return '';
+
+      default:
+        return '';
+    }
+  };
+
+  const handleLocalChange = (e) => {
+    const { name, value } = e.target;
     
-    // State for validation errors
-    const [errors, setErrors] = useState({});
-    const [localSubmitting, setLocalSubmitting] = useState(false);
-  
-    const validateField = (name, value) => {
-      switch (name) {
-        case 'first_name':
-          if (!value.trim()) return 'First name is required';
-          if (value.trim().length < 2) return 'First name must be at least 2 characters';
-          if (!/^[a-zA-Z\s]*$/.test(value.trim())) return 'First name can only contain letters and spaces';
-          return '';
+    // Update form
+    setLocalForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
 
-        case 'last_name':
-          if (!value.trim()) return 'Last name is required';
-          if (value.trim().length < 2) return 'Last name must be at least 2 characters';
-          if (!/^[a-zA-Z\s]*$/.test(value.trim())) return 'Last name can only contain letters and spaces';
-          return '';
-  
-        case 'age':
-          if (!value) return 'Age is required';
-          const age = parseInt(value);
-          if (isNaN(age) || age < 0 || age > 120) return 'Please enter a valid age between 0 and 120';
-          return '';
-  
-        case 'condition':
-          if (!value) return 'Condition is required';
-          return '';
-  
-        case 'admission_date':
-          if (!value) return 'Admission date is required';
-          return '';
-
-        case 'reason':
-          if (!value.trim()) return 'Reason for admission is required';
-          if (value.trim().length < 3) return 'Reason should be at least 3 characters';
-          return '';
-
-        case 'time_period':
-          if (!value.trim()) return 'Expected time period is required';
-          return '';
-
-        case 'national_id':
-  if (!value) return 'National ID is required';
-  if (value.length !== 16) return 'National ID must be exactly 16 characters';
-  if (!/^\d+$/.test(value)) return 'National ID must contain only numbers';
-  
-  // Extract birth year from positions 1-4 (0-indexed)
-  const birthYear = parseInt(value.substring(1, 5));
-  const currentYear = new Date().getFullYear();
-  const userAge = currentYear - birthYear;
-  
-  if (userAge < 16) return 'You must be at least 16 years old';
-  
-  return '';
-
-default:
-  return '';
-      }
-    };
-  
-    const handleLocalChange = (e) => {
-      const { name, value } = e.target;
-      
-      // Update form
-      setLocalForm(prev => ({
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
         ...prev,
-        [name]: value
+        [name]: ''
       }));
-  
-      // Validate field
-      const error = validateField(name, value);
+    }
+
+    // Real-time validation for immediate feedback
+    const error = validateField(name, value);
+    if (error) {
       setErrors(prev => ({
         ...prev,
         [name]: error
       }));
-    };
-  
-    const validateForm = () => {
-      const newErrors = {};
-      const requiredFields = ['first_name', 'last_name', 'age', 'condition', 'admission_date', 'reason', 'time_period'];
-      
-      // Validate all required fields
-      requiredFields.forEach(field => {
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const requiredFields = ['first_name', 'last_name', 'age', 'condition', 'guardian_id', 'professional_id', 'admission_date', 'reason', 'time_period'];
+    
+    // Validate all required fields
+    requiredFields.forEach(field => {
+      const error = validateField(field, localForm[field]);
+      if (error) newErrors[field] = error;
+    });
+    
+    // Validate optional fields that have values
+    const optionalFields = ['national_id'];
+    optionalFields.forEach(field => {
+      if (localForm[field]) {
         const error = validateField(field, localForm[field]);
         if (error) newErrors[field] = error;
-      });
-      
-      // Validate optional fields that have values
-      const optionalFields = ['national_id'];
-      optionalFields.forEach(field => {
-        if (localForm[field]) {
-          const error = validateField(field, localForm[field]);
-          if (error) newErrors[field] = error;
-        }
-      });
-      
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    };
-  
-    const handleLocalSubmit = async (e) => {
-      e.preventDefault();
-      
-      // Stop form submission if already submitting
-      if (localSubmitting) return;
-      
-      // Validate all fields
-      if (!validateForm()) {
-        // Scroll to the first error
+      }
+    });
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLocalSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Stop form submission if already submitting
+    if (localSubmitting) return;
+    
+    // Validate all fields
+    if (!validateForm()) {
+      // Scroll to the first error
+      setTimeout(() => {
         const firstErrorField = document.querySelector('.border-red-500');
         if (firstErrorField) {
           firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstErrorField.focus();
         }
-        return;
-      }
+      }, 100);
+      return;
+    }
+    
+    setLocalSubmitting(true);
+    setIsSubmitting(true);
+    setError(''); // Clear any previous errors
+    
+    try {
+      console.log("🚀 Sending Data to API:", localForm);
       
-      setLocalSubmitting(true);
-      setIsSubmitting(true);
+      const url = isEditing 
+        ? `${API.baseUrl}/rehab/participants/${localForm.id}`
+        : `${API.baseUrl}/rehab/participants`;
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: localForm.id,
+          first_name: localForm.first_name.trim(),
+          last_name: localForm.last_name.trim(),
+          gender: localForm.gender,
+          age: parseInt(localForm.age),
+          national_id: localForm.national_id || null,
+          condition: localForm.condition,
+          guardian_id: localForm.guardian_id,
+          counselor_id: localForm.counselor_id || null,
+          professional_id: localForm.professional_id,
+          admission_date: localForm.admission_date,
+          status: localForm.status,
+          notes: localForm.notes.trim() || '',
+          reason: localForm.reason.trim(),
+          time_period: localForm.time_period.trim()
+        }),
+      });
+
+      const data = await response.json();
       
-      try {
-        console.log("🚀 Sending Data to API:", localForm);
-        
-        const url = isEditing 
-          ? `${API.baseUrl}/rehab/participants/${localForm.id}`
-          : `${API.baseUrl}/rehab/participants`;
-        const method = isEditing ? 'PUT' : 'POST';
-
-        const response = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: localForm.id,
-            first_name: localForm.first_name.trim(),
-            last_name: localForm.last_name.trim(),
-            gender: localForm.gender,
-            age: localForm.age,
-            national_id: localForm.national_id || null,
-            condition: localForm.condition,
-            guardian_id: localForm.guardian_id,
-            counselor_id: localForm.counselor_id || null,
-            professional_id: localForm.professional_id,
-            admission_date: localForm.admission_date,
-            status: localForm.status,
-            notes: localForm.notes.trim() || '',
-            reason: localForm.reason.trim(),
-            time_period: localForm.time_period.trim()
-          }),
-        });
-
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Error saving participant');
-        }
-
-        setMessage(isEditing ? 'Participant updated successfully' : 'Participant added successfully');
-        await fetchParticipants(); // Refresh the participants list
-        setShowFormModal(false);
-        resetForm();
-      } catch (err) {
-        console.error('Form submission error:', err);
-        setError(err.message || 'Error submitting participant');
-      } finally {
-        setLocalSubmitting(false);
-        setIsSubmitting(false);
+      if (!response.ok) {
+        throw new Error(data.error || 'Error saving participant');
       }
-    };
-  
-    const getInputClassName = (fieldName) => {
-      return `w-full p-2 border ${errors[fieldName] ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'} rounded-md focus:ring-2 transition-all duration-200`;
-    };
-  
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center p-6 border-b">
-            <h3 className="text-2xl font-semibold text-gray-900">
-              {isEditing ? 'Edit Participant' : 'Add New Participant'}
-            </h3>
+
+      setMessage(isEditing ? 'Participant updated successfully' : 'Participant added successfully');
+      await fetchParticipants(); // Refresh the participants list
+      setShowFormModal(false);
+      resetForm();
+    } catch (err) {
+      console.error('Form submission error:', err);
+      setError(err.message || 'Error submitting participant');
+    } finally {
+      setLocalSubmitting(false);
+      setIsSubmitting(false);
+    }
+  };
+
+  const getInputClassName = (fieldName) => {
+    return `w-full p-3 border ${
+      errors[fieldName] 
+        ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50' 
+        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+    } rounded-md focus:ring-2 focus:outline-none transition-all duration-200`;
+  };
+
+  // Rest of your FormModal JSX remains the same, just make sure you're using the corrected validation logic
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b">
+          <h3 className="text-2xl font-semibold text-gray-900">
+            {isEditing ? 'Edit Participant' : 'Add New Participant'}
+          </h3>
+          <button
+            onClick={() => setShowFormModal(false)}
+            className="text-gray-400 hover:text-gray-500 transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <form onSubmit={handleLocalSubmit} className="p-6">
+          {/* Form error summary */}
+          {Object.keys(errors).length > 0 && (
+            <div className="mb-6 p-4 bg-red-50 rounded-md border border-red-200">
+              <div className="flex items-start">
+                <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-medium text-red-800">Please correct the following errors:</h4>
+                  <ul className="mt-2 list-disc list-inside text-sm text-red-700 space-y-1">
+                    {Object.entries(errors).map(([field, message]) => (
+                      <li key={field}>{message}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                First Name *
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                value={localForm.first_name}
+                onChange={handleLocalChange}
+                className={getInputClassName('first_name')}
+                placeholder="Enter first name"
+                required
+              />
+              {errors.first_name && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.first_name}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name *
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                value={localForm.last_name}
+                onChange={handleLocalChange}
+                className={getInputClassName('last_name')}
+                placeholder="Enter last name"
+                required
+              />
+              {errors.last_name && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.last_name}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+              <select
+                name="gender"
+                value={localForm.gender}
+                onChange={handleLocalChange}
+                className={getInputClassName('gender')}
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Age *
+              </label>
+              <input
+                type="number"
+                name="age"
+                value={localForm.age}
+                onChange={handleLocalChange}
+                className={getInputClassName('age')}
+                min="0"
+                max="120"
+                placeholder="Enter age"
+                required
+              />
+              {errors.age && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.age}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Condition *
+              </label>
+              <select
+                name="condition"
+                value={localForm.condition}
+                onChange={handleLocalChange}
+                className={getInputClassName('condition')}
+                required
+              >
+                <option value="">Select Condition</option>
+                <option value="Drug Addiction">Drug Addiction</option>
+                <option value="Alcoholism">Alcoholism</option>
+                <option value="Mental Health Issue">Mental Health Issue</option>
+                <option value="Trauma Recovery">Trauma Recovery</option>
+                <option value="Physical Rehabilitation">Physical Rehabilitation</option>
+                <option value="Other">Other</option>
+              </select>
+              {errors.condition && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.condition}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Guardian *
+              </label>
+              <select
+                name="guardian_id"
+                value={localForm.guardian_id}
+                onChange={handleLocalChange}
+                className={getInputClassName('guardian_id')}
+                required
+              >
+                <option value="">Select Guardian</option>
+                {guardians.map((g) => (
+                  <option key={g.id} value={g.id}>{g.first_name} {g.last_name}</option>
+                ))}
+              </select>
+              {errors.guardian_id && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.guardian_id}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Counselor (Optional)
+              </label>
+              <select
+                name="counselor_id"
+                value={localForm.counselor_id}
+                onChange={handleLocalChange}
+                className={getInputClassName('counselor_id')}
+              >
+                <option value="">Select Counselor (Optional)</option>
+                {counselors.map((c) => (
+                  <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Professional *
+              </label>
+              <select
+                name="professional_id"
+                value={localForm.professional_id}
+                onChange={handleLocalChange}
+                className={getInputClassName('professional_id')}
+                required
+              >
+                <option value="">Select Professional</option>
+                {professionals.map((p) => (
+                  <option key={p.id} value={p.id}>{p.first_name} {p.last_name} - {p.profession}</option>
+                ))}
+              </select>
+              {errors.professional_id && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.professional_id}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Admission Date *
+              </label>
+              <input
+                type="date"
+                name="admission_date"
+                value={localForm.admission_date}
+                onChange={handleLocalChange}
+                className={getInputClassName('admission_date')}
+                required
+              />
+              {errors.admission_date && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.admission_date}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                name="status"
+                value={localForm.status}
+                onChange={handleLocalChange}
+                className={getInputClassName('status')}
+              >
+                <option value="Active">Active</option>
+                <option value="Discharged">Discharged</option>
+                <option value="Transferred">Transferred</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                National ID (Optional)
+              </label>
+              <input
+                type="text"
+                name="national_id"
+                value={localForm.national_id}
+                onChange={(e) => {
+                  // Limit to 16 characters and only numbers
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 16);
+                  handleLocalChange({ target: { name: 'national_id', value } });
+                }}
+                maxLength={16}
+                className={getInputClassName('national_id')}
+                placeholder="16 digits only"
+              />
+              {errors.national_id && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.national_id}
+                </p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">{localForm.national_id?.length || 0}/16 characters</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Expected Time Period *
+              </label>
+              <input
+                type="text"
+                name="time_period"
+                value={localForm.time_period}
+                onChange={handleLocalChange}
+                className={getInputClassName('time_period')}
+                placeholder="e.g. 3 months, 2 weeks"
+                required
+              />
+              {errors.time_period && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.time_period}
+                </p>
+              )}
+            </div>
+
+            <div className="col-span-full">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason for Admission *
+              </label>
+              <textarea 
+                name="reason"
+                value={localForm.reason}
+                onChange={handleLocalChange}
+                rows={4}
+                maxLength={1000}
+                placeholder="Explain why the participant is admitted..."
+                className={getInputClassName('reason')}
+                required
+              />
+              {errors.reason && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.reason}
+                </p>
+              )}
+              <div className="mt-1 text-right text-xs text-gray-500">
+                {localForm.reason.length} / 1000 characters
+              </div>
+            </div>
+
+            <div className="col-span-full">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Additional Notes
+              </label>
+              <textarea 
+                name="notes"
+                value={localForm.notes}
+                onChange={handleLocalChange}
+                rows={4}
+                maxLength={1000}
+                placeholder="Document observations, treatment notes, or any additional information here..."
+                className={getInputClassName('notes')}
+              />
+              <div className="mt-1 text-right text-xs text-gray-500">
+                {localForm.notes.length} / 1000 characters
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex justify-end gap-3">
             <button
+              type="button"
               onClick={() => setShowFormModal(false)}
-              className="text-gray-400 hover:text-gray-500 transition-colors"
+              className="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              disabled={localSubmitting}
             >
-              <X className="h-6 w-6" />
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className={`px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                ${localSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} 
+                transition-colors flex items-center`}
+              disabled={localSubmitting}
+            >
+              {localSubmitting && (
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              {isEditing ? 
+                (localSubmitting ? 'Updating...' : 'Update Participant') : 
+                (localSubmitting ? 'Creating...' : 'Add Participant')}
             </button>
           </div>
-  
-          <form onSubmit={handleLocalSubmit} className="p-6">
-            {/* Form error summary */}
-            {Object.keys(errors).length > 0 && (
-              <div className="mb-6 p-4 bg-red-50 rounded-md border border-red-200">
-                <div className="flex items-start">
-                  <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-2" />
-                  <div>
-                    <h4 className="text-sm font-medium text-red-800">Please correct the following errors:</h4>
-                    <ul className="mt-2 list-disc list-inside text-sm text-red-700">
-                      {Object.entries(errors).map(([field, message]) => (
-                        <li key={field}>{message}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={localForm.first_name}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('first_name')}
-                  required
-                />
-                {errors.first_name && <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={localForm.last_name}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('last_name')}
-                  required
-                />
-                {errors.last_name && <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                <select
-                  name="gender"
-                  value={localForm.gender}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('gender')}
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Age *</label>
-                <input
-                  type="number"
-                  name="age"
-                  value={localForm.age}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('age')}
-                  min="0"
-                  max="120"
-                  required
-                />
-                {errors.age && <p className="mt-1 text-sm text-red-600">{errors.age}</p>}
-              </div>
-  
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Condition *</label>
-                <select
-                  name="condition"
-                  value={localForm.condition}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('condition')}
-                  required
-                >
-                  <option value="">Select Condition</option>
-                  <option value="Drug Addiction">Drug Addiction</option>
-                  <option value="Alcoholism">Alcoholism</option>
-                  <option value="Mental Health Issue">Mental Health Issue</option>
-                  <option value="Trauma Recovery">Trauma Recovery</option>
-                  <option value="Physical Rehabilitation">Physical Rehabilitation</option>
-                  <option value="Other">Other</option>
-                </select>
-                {errors.condition && <p className="mt-1 text-sm text-red-600">{errors.condition}</p>}
-              </div>
-  
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Guardian *</label>
-                <select
-                  name="guardian_id"
-                  value={localForm.guardian_id}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('guardian_id')}
-                  required
-                >
-                  <option value="">Select Guardian</option>
-                  {guardians.map((g) => (
-                    <option key={g.id} value={g.id}>{g.first_name} {g.last_name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Counselor (Optional)</label>
-  <select
-    name="counselor_id"
-    value={localForm.counselor_id}
-    onChange={handleLocalChange}
-    className={getInputClassName('counselor_id')}
-  >
-    <option value="">Select Counselor (Optional)</option>
-    {counselors.map((c) => (
-      <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>
-    ))}
-  </select>
-</div>
-  
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Professional *</label>
-                <select
-                  name="professional_id"
-                  value={localForm.professional_id}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('professional_id')}
-                  required
-                >
-                  <option value="">Select Professional</option>
-                  {professionals.map((p) => (
-                    <option key={p.id} value={p.id}>{p.first_name} {p.last_name} - {p.profession}</option>
-                  ))}
-                </select>
-              </div>
-  
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Admission Date *</label>
-                <input
-                  type="date"
-                  name="admission_date"
-                  value={localForm.admission_date}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('admission_date')}
-                  required
-                />
-                {errors.admission_date && <p className="mt-1 text-sm text-red-600">{errors.admission_date}</p>}
-              </div>
-  
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  name="status"
-                  value={localForm.status}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('status')}
-                >
-                  <option value="Active">Active</option>
-                  <option value="Discharged">Discharged</option>
-                  <option value="Transferred">Transferred</option>
-                </select>
-              </div>
-  
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">National ID (Optional)</label>
-                <input
-                  type="text"
-                  name="national_id"
-                  value={localForm.national_id}
-                  onChange={(e) => {
-                    // Limit to 16 characters
-                    if (e.target.value.length <= 16) {
-                      handleLocalChange(e);
-                    }
-                  }}
-                  maxLength={16}
-                  className={getInputClassName('national_id')}
-                  placeholder="16 characters maximum"
-                />
-                {errors.national_id && <p className="mt-1 text-sm text-red-600">{errors.national_id}</p>}
-                <p className="mt-1 text-xs text-gray-500">{localForm.national_id?.length || 0}/16 characters</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Expected Time Period *</label>
-                <input
-                  type="text"
-                  name="time_period"
-                  value={localForm.time_period}
-                  onChange={handleLocalChange}
-                  className={getInputClassName('time_period')}
-                  placeholder="e.g. 3 months, 2 weeks"
-                  required
-                />
-                {errors.time_period && <p className="mt-1 text-sm text-red-600">{errors.time_period}</p>}
-              </div>
-
-              <div className="col-span-full">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Admission *</label>
-                <textarea 
-                  name="reason"
-                  value={localForm.reason}
-                  onChange={handleLocalChange}
-                  rows={4}
-                  placeholder="Explain why the participant is admitted..."
-                  className={getInputClassName('reason')}
-                  required
-                />
-                {errors.reason && <p className="mt-1 text-sm text-red-600">{errors.reason}</p>}
-                <div className="mt-1 text-right text-xs text-gray-500">
-                  {localForm.reason.length} / 1000 characters
-                </div>
-              </div>
-
-              <div className="col-span-full">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
-                <textarea 
-                  name="notes"
-                  value={localForm.notes}
-                  onChange={handleLocalChange}
-                  rows={4}
-                  placeholder="Document observations, treatment notes, or any additional information here..."
-                  className={getInputClassName('notes')}
-                />
-                <div className="mt-1 text-right text-xs text-gray-500">
-                  {localForm.notes.length} / 1000 characters
-                </div>
-              </div>
-            </div>
-  
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowFormModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                disabled={localSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
-                  ${localSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} 
-                  flex items-center`}
-                disabled={localSubmitting}
-              >
-                {localSubmitting && (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                )}
-                {isEditing ? 
-                  (localSubmitting ? 'Updating...' : 'Update Participant') : 
-                  (localSubmitting ? 'Creating...' : 'Add Participant')}
-              </button>
-            </div>
-          </form>
-        </div>
+        </form>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   const DetailsModal = ({ participant, onClose }) => {
     const DetailRow = ({ icon: Icon, label, value }) => (
