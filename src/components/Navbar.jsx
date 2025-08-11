@@ -106,7 +106,7 @@ const Navbar = () => {
                 </div>
                 <div className="hidden sm:block">
                   <span className="bg-gradient-to-r from-white via-blue-50 to-purple-50 bg-clip-text text-transparent text-2xl font-extrabold tracking-tight">
-                    Guardian Portal
+                    Rehab
                   </span>
                   <div className="h-0.5 w-full bg-gradient-to-r from-blue-400 to-purple-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
                 </div>

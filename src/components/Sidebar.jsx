@@ -117,7 +117,7 @@ const Sidebar = () => {
       <SidebarSection title="Management">
         <SidebarItem 
           icon={BookOpen} 
-          label="Surveys" 
+          label="Programs" 
           path="/programs"
         />
         <SidebarItem 
